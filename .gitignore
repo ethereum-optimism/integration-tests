@@ -1,0 +1,31 @@
+# Dependencies
+/**/node_modules/
+
+# Build
+/**/build/
+/**/artifacts/
+/**/cache/
+
+# IDE
+/.idea
+/.awcache
+/.vscode
+*.iml
+
+# misc
+*.swp
+.DS_Store
+/packages/**/LICENSE.txt
+*.test.tmp
+/**/package-lock.json
+
+/**/*.log
+
+*.bytecode
+
+# security
+*.pem
+
+# Local Dockerfiles
+*.local.yml
+*.mine.yml

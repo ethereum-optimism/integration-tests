@@ -1,0 +1,52 @@
+# TODO: COPY THIS OVER TO docker-compose.local.yml FOR YOUR OWN LOCAL CONFIG
+version: "3"
+
+services:
+
+  microservices:
+    image: ${{ AWS_CI_AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/optimism/rollup-microservices:latest
+    volumes:
+      - l1-node-data:/mnt/l1-node:rw
+      - l2-node-data:/mnt/l2-node:rw
+    env_file:
+      - docker-compose.env
+
+  l1_chain:
+    image: trufflesuite/ganache-cli:latest
+    entrypoint: node /app/ganache-core.docker.cli.js --account="8d0224d16e8c4d5d51c15e7bee29345272627d4e5eb7d10565dd3586a02c574c,100" --account="880310351342cc77902f1935a4c2a9c3a2cef3d600dd1010ac117967ea336249,100"
+    ports:
+      - 9545:8545
+
+  postgres:
+    image: ${{ AWS_CI_AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/optimism/postgres:latest
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+    ports:
+      - 5432:5432
+
+  geth_l2:
+    image: ${{ AWS_CI_AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/optimism/geth:latest
+    volumes:
+      - l2-node-data:/mnt/l2-node/l2:rw
+    environment:
+      - CLEAR_DATA_KEY
+      - TARGET_GAS_LIMIT
+      - VOLUME_PATH=/mnt/l2-node/l2
+      - HOSTNAME=geth_l2
+      - PORT=8545
+      - NETWORK_ID=108
+    ports:
+      - 8545:8545
+
+volumes:
+  l1-node-data:
+  l2-node-data:
+
+
+
+
+
+
+
+
