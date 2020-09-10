@@ -10,7 +10,7 @@
     "all": "yarn clean && yarn build && yarn wait && yarn test && yarn fix && yarn lint",
     "build": "tsc -p .",
     "clean": "rimraf build/",
-    "fix": "prettier --config ../../prettier-config.json --write 'index.ts' 'src/**/*.ts'",
+    "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
     "lint": "tslint --format stylish --project .",
     "wait": "mocha --require ts-node/register 'test/wait-for-contracts-to-deploy.ts' --timeout 30000 --exit",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 30000 --exit",
@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^12.0.7",
+    "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "ethereum-waffle": "2.1.0",
     "ethers": "^4.0.45",

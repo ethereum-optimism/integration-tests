@@ -1,6 +1,6 @@
-import {JsonRpcProvider, Provider} from 'ethers/providers'
-import {Config} from './config'
-import {Contract} from 'ethers'
+import { JsonRpcProvider, Provider } from 'ethers/providers'
+import { Config } from './config'
+import { Contract } from 'ethers'
 
 let l1Provider: Provider
 export const getL1Provider = (): Provider => {

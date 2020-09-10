@@ -3,8 +3,17 @@ version: "3"
 
 services:
 
+  integration_tests:
+    volumes:
+      - ./:/mnt/integration-tests/
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - docker-compose.env
+
   microservices:
-    image: ${{ AWS_CI_AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/optimism/rollup-microservices:latest
+    image: <AWS_CI_AWS_ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/optimism/rollup-microservices:latest
     volumes:
       - l1-node-data:/mnt/l1-node:rw
       - l2-node-data:/mnt/l2-node:rw
@@ -18,7 +27,7 @@ services:
       - 9545:9545
 
   postgres:
-    image: ${{ AWS_CI_AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/optimism/postgres:latest
+    image: <AWS_CI_AWS_ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/optimism/postgres:latest
     environment:
       - POSTGRES_USER=test
       - POSTGRES_PASSWORD=test
@@ -26,7 +35,7 @@ services:
       - 5432:5432
 
   geth_l2:
-    image: ${{ AWS_CI_AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/optimism/geth:latest
+    image: <AWS_CI_AWS_ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/optimism/geth:latest
     volumes:
       - l2-node-data:/mnt/l2-node/l2:rw
     environment:
