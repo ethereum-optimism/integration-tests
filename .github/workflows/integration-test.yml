@@ -22,8 +22,7 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_CI_AWS_ACCOUNT_ID }}
         run: |
-          sed -i '' -E 's/<AWS_CI_AWS_ACCOUNT_ID>/'"$AWS_ACCOUNT_ID"'/g' ./docker-compose.ci.yml
-
+          ./.github/scripts/replace-aws-account-id.sh
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
