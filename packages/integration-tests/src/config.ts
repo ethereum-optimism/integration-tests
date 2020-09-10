@@ -25,4 +25,22 @@ export class Config {
     return process.env.POSTGRES_PASSWORD
   }
 
+
+  /* Contracts */
+  public static L1ToL2TransactionQueueContractAddress(): string {
+    return process.env.L1_TO_L2_TRANSACTION_QUEUE_CONTRACT_ADDRESS
+  }
+
+  public static SafetyTransactionQueueContractAddress(): string {
+    return process.env.SAFETY_TRANSACTION_QUEUE_CONTRACT_ADDRESS
+  }
+
+  public static CanonicalTransactionChainContractAddress(): string {
+    return process.env.CANONICAL_TRANSACTION_CHAIN_CONTRACT_ADDRESS
+  }
+
+  public static StateCommitmentChainContractAddress(): string {
+    return process.env.STATE_COMMITMENT_CHAIN_CONTRACT_ADDRESS
+  }
+
 }

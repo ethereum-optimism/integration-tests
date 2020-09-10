@@ -14,4 +14,4 @@ WORKDIR /server/packages/integration-tests
 RUN apt-get update
 RUN apt-get install -y postgresql-client
 
-ENTRYPOINT [ "bash", "./exec/wait_for_dependencies.sh", "yarn", "run", "test" ]
+ENTRYPOINT [ "bash", "./exec/wait_for_dependencies.sh", "yarn", "run", "ci" ]
