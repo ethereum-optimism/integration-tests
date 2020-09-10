@@ -4,11 +4,9 @@ version: "3"
 services:
 
   integration_tests:
-    volumes:
-      - ./:/mnt/integration-tests/
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     env_file:
       - docker-compose.env
 

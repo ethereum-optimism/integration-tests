@@ -7,7 +7,6 @@ RUN yarn
 RUN yarn clean
 RUN yarn build
 
-
 WORKDIR /server/packages/integration-tests
 
 # This is required for the wait_for_dependencies.sh script
