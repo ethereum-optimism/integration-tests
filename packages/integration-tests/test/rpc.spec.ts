@@ -36,35 +36,7 @@ describe('sendTransaction', () => {
     provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
   })
 
-  it('should sign transaction', async () => {
-    const tx = {
-      to: '0x5A0b54D5dc17e0AadC383d2db43B0a0D3E029c4c',
-      nonce: 0,
-      gasLimit: 0,
-      gasPrice: 0,
-      data: '0x00',
-      value: 0,
-      chainId: 1,
-    }
-
-    const signer = provider.getSigner()
-    // Get the address represting the keypair used to sign the tx
-    const address = await signer.getAddress()
-    // Sign tx, get a RLP encoded hex string of the signed tx
-    const signed = await signer.signTransaction(tx)
-    // Decode the signed transaction
-    const parsed = parse(signed)
-    // Join the r, s and v values
-    const sig = joinSignature(parsed as SignatureLike)
-    // Hash the transaction using the EthSign serialization
-    const hash = sighashEthSign(tx)
-    // ecrecover and assert the addresses match
-    // this concats the prefix and hashes the message
-    const recovered = verifyMessage(hash, sig)
-    address.should.eq(recovered)
-  })
-
-  xit('should send eth_sendRawEthSignTransaction', async () => {
+  it('should send eth_sendRawEthSignTransaction', async () => {
     const signer = provider.getSigner()
     const chainId = await signer.getChainId()
 
@@ -103,7 +75,7 @@ describe('sendTransaction', () => {
     tx.to.should.eq(receipt.to)
   })
 
-  xit('should sendTransaction', async () => {
+  it('should sendTransaction', async () => {
     const signer = provider.getSigner()
     const chainId = await signer.getChainId()
 
