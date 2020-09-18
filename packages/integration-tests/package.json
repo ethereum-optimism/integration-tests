@@ -31,6 +31,11 @@
     "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
   },
   "dependencies": {
+    "@eth-optimism/core-utils": "^0.0.1-alpha.28",
+    "@eth-optimism/ovm-toolchain": "0.0.1-alpha.2",
+    "@eth-optimism/provider": "0.0.1-alpha.2",
+    "@ethersproject/providers": "^5.0.9",
+    "@ethersproject/wallet": "^5.0.4"
   },
   "devDependencies": {
     "@types/node": "^12.0.7",
