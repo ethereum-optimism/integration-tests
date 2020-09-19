@@ -5,15 +5,15 @@
 
 USAGE="
 $ ./scripts/test.sh
-Build docker images and test using git refs.
+Build docker images and test using git branches.
 
 CLI Arguments:
-  -m|--microservices   - git ref of microservices
-  -p|--postgres        - git ref of postgres
-  -g|--gethl2          - git ref of gethl2
+  -m|--microservices   - microservices branch
+  -p|--postgres        - postgres branch
+  -g|--gethl2          - gethl2 branch
 
 Default values are master.
-It is recommended to use git hashes, but any git ref works.
+Will rebuild if new commits to a branch are detected.
 
 Example:
 $ ./scripts/test.sh -p master -m new-feature-x -g new-feature-y
@@ -25,6 +25,16 @@ BASE_DIR="$SCRIPTS_DIR/.."
 MICROSERVICES_GIT_REF=master
 POSTGRES_GIT_REF=master
 GETH_L2_GIT_REF=master
+
+FILTER='label=com.docker.compose.project=optimistic-rollup-integration-tests'
+
+# delete stopped containers so that volumes can be pruned cleanly
+docker rm $(docker container ls -a \
+    --filter="$FILTER" \
+    --format='{{.ID}}') 2&>/dev/null
+
+docker volume rm -f \
+    $(docker volume ls --filter="$FILTER" --format='{{.Name}}') 2&>/dev/null
 
 while (( "$#" )); do
   case "$1" in
@@ -66,6 +76,8 @@ while (( "$#" )); do
   esac
 done
 
+# valid characters for git refs but not for container tags
+# must be replaced at this step.
 MICROSERVICES_TAG=$(echo $MICROSERVICES_GIT_REF | sed 's/\//_/')
 POSTGRES_TAG=$(echo $POSTGRES_GIT_REF | sed 's/\//_/')
 GETH_L2_TAG=$(echo $GETH_L2_GIT_REF | sed 's/\//_/')
@@ -82,4 +94,6 @@ MICROSERVICES_TAG=$MICROSERVICES_TAG \
 POSTGRES_TAG=$POSTGRES_TAG \
 GETH_L2_TAG=$GETH_L2_TAG \
     docker-compose \
-        -f $BASE_DIR/docker-compose.local.yml up
+        -f $BASE_DIR/docker-compose.local.yml up \
+        --abort-on-container-exit \
+        --exit-code-from integration_tests
