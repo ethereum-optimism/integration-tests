@@ -25,6 +25,8 @@ services:
 
   postgres:
     image: "eth-optimism/postgres:${POSTGRES_TAG}"
+    volumes:
+      - postgres:/var/lib/postgresql/data
     env_file:
       - docker-compose.env
     ports:
@@ -42,3 +44,4 @@ services:
 volumes:
   l1-node-data:
   l2-node-data:
+  postgres:
