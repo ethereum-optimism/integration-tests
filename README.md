@@ -20,15 +20,15 @@ exist and run them as part of the integration test suite.
 ```bash
 $ ./scripts/test.sh -h
 
-Build docker images and test using git refs.
+Build docker images and test using git branches.
 
 CLI Arguments:
-  -m|--microservices   - git ref of microservices
-  -p|--postgres        - git ref of postgres
-  -g|--gethl2          - git ref of gethl2
+  -m|--microservices   - microservices branch
+  -p|--postgres        - postgres branch
+  -g|--gethl2          - gethl2 branch
 
 Default values are master.
-It is recommended to use git hashes, but any git ref works.
+Will rebuild if new commits to a branch are detected.
 
 Example:
 $ ./scripts/test.sh -p master -m new-feature-x -g new-feature-y
