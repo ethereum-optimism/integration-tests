@@ -105,8 +105,8 @@ describe('sendTransaction', () => {
   })
 
   it('gas price should be 0', async () => {
-    const price = await provider.getGasPrice();
-    (0).should.eq(price.toNumber())
+    const price = await provider.getGasPrice()
+    ;(0).should.eq(price.toNumber())
   })
 
   it('should estimate gas', async () => {
@@ -120,10 +120,7 @@ describe('sendTransaction', () => {
 
     // The gas price is the same with different
     // transaction sizes.
-    const cases = [
-      '0x',
-      '0x' + '00'.repeat(256),
-    ]
+    const cases = ['0x', '0x' + '00'.repeat(256)]
 
     const estimates = []
     for (const c of cases) {
