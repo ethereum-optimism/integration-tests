@@ -103,4 +103,34 @@ describe('sendTransaction', () => {
     tx.gasPrice.should.eq(result.gasPrice.toNumber())
     tx.data.should.eq(result.data)
   })
+
+  it('gas price should be 0', async () => {
+    const price = await provider.getGasPrice()
+    ;(0).should.eq(price.toNumber())
+  })
+
+  it('should estimate gas', async () => {
+    const template = {
+      to: etherbase,
+      gasLimit: 21000,
+      gasPrice: 0,
+      value: 0,
+      data: '',
+    }
+
+    // The gas price is the same with different
+    // transaction sizes.
+    const cases = ['0x', '0x' + '00'.repeat(256)]
+
+    const estimates = []
+    for (const c of cases) {
+      template.data = c
+      const estimate = await provider.estimateGas(template)
+      estimates.push(estimate)
+    }
+
+    for (const estimate of estimates) {
+      estimate.toNumber().should.eq(7999999)
+    }
+  })
 })

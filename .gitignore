@@ -27,5 +27,4 @@
 *.pem
 
 # Local Dockerfiles
-*.local.yml
 *.mine.yml
