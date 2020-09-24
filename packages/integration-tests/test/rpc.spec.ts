@@ -139,4 +139,21 @@ describe('Transactions', () => {
     chainId.should.eq('0x1a4')
     parseInt(chainId, 16).should.eq(420)
   })
+
+  it('should get transaction (l2 metadata)', async () => {
+    const tx = {
+      to: etherbase,
+      gasLimit: 21000,
+      gasPrice: 0,
+      data: '0x',
+      value: 0,
+    }
+
+    const signer = provider.getSigner()
+    const result = await signer.sendTransaction(tx)
+
+    const txn = await provider.getTransaction(result.hash)
+    txn.type.should.be.a('string')
+    txn.queueOrigin.should.be.a('string')
+  })
 })

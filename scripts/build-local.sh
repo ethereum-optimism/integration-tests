@@ -45,7 +45,7 @@ HAS_MICROSERVICES=$(docker images eth-optimism/rollup-microservices \
 if [[ -z "$HAS_MICROSERVICES" ]]; then
     git checkout "$MICROSERVICES_GIT_REF"
     git pull
-    yarn install
+    yarn install --frozen-lockfile
     echo "Building eth-optimism/rollup-microservices:$MICROSERVICES_TAG"
     docker build \
         --label "$PROJECT_LABEL" \
