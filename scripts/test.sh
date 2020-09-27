@@ -11,9 +11,16 @@ CLI Arguments:
   -m|--microservices   - microservices branch
   -p|--postgres        - postgres branch
   -g|--gethl2          - gethl2 branch
+  -l|--logs            - grep -E log filter
 
-Default values are master.
+Default values for branches are master.
 Will rebuild if new commits to a branch are detected.
+
+
+For filtering logs with -l, use the | to delimit names of services.
+Possible services are geth_l2, postgres, l1_chain, integration_tests.
+Example:
+$ ./scripts/test.sh -l 'geth_l2|integration_tests'
 
 Example:
 $ ./scripts/test.sh -p master -m new-feature-x -g new-feature-y
@@ -22,9 +29,12 @@ $ ./scripts/test.sh -p master -m new-feature-x -g new-feature-y
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 BASE_DIR="$SCRIPTS_DIR/.."
 
-MICROSERVICES_GIT_REF=master
-POSTGRES_GIT_REF=master
-GETH_L2_GIT_REF=master
+# default grep filter for logging specific services
+LOG_FILTER='microservices|integration_tests|postgres|geth_l2'
+
+MICROSERVICES_GIT_REF=${MICROSERVICES_GIT_REF:-master}
+POSTGRES_GIT_REF=${POSTGRES_GIT_REF:-master}
+GETH_L2_GIT_REF=${GETH_L2_GIT_REF:-master}
 
 FILTER='label=com.docker.compose.project=optimistic-rollup-integration-tests'
 
@@ -65,6 +75,15 @@ while (( "$#" )); do
         exit 1
       fi
       ;;
+    -l|--logs)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        LOG_FILTER="$2"
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
     -h|--help)
       echo "$USAGE"
       exit 0
@@ -95,5 +114,6 @@ POSTGRES_TAG=$POSTGRES_TAG \
 GETH_L2_TAG=$GETH_L2_TAG \
     docker-compose \
         -f $BASE_DIR/docker-compose.local.yml up \
+        --exit-code-from integration_tests \
         --abort-on-container-exit \
-        --exit-code-from integration_tests
+        | grep -E --color=always "$LOG_FILTER"

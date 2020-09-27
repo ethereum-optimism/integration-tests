@@ -18,17 +18,23 @@ refs. `scripts/test.sh` will autotmatically build images that don't already
 exist and run them as part of the integration test suite.
 
 ```bash
-$ ./scripts/test.sh -h
-
+$ ./scripts/test.sh
 Build docker images and test using git branches.
 
 CLI Arguments:
   -m|--microservices   - microservices branch
   -p|--postgres        - postgres branch
   -g|--gethl2          - gethl2 branch
+  -l|--logs            - grep -E log filter
 
-Default values are master.
+Default values for branches are master.
 Will rebuild if new commits to a branch are detected.
+
+
+For filtering logs with -l, use the | to delimit names of services.
+Possible services are geth_l2, postgres, l1_chain, integration_tests.
+Example:
+$ ./scripts/test.sh -l 'geth_l2|integration_tests'
 
 Example:
 $ ./scripts/test.sh -p master -m new-feature-x -g new-feature-y
