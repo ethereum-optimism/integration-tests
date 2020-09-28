@@ -15,7 +15,7 @@ if [ -n "$REBUILD" ]; then
 
   if [ -n "$FETCH_DEPS" ]; then
     echo -e "\nFetching dependencies (this will take forever the first time time)..."
-    yarn --cwd $ROOT_DIR --verbose
+    yarn --cwd $ROOT_DIR --verbose --frozen-lockfile
   fi
 
   yarn --cwd $ROOT_DIR clean

@@ -5,9 +5,11 @@ services:
   integration_tests:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     env_file:
       - docker-compose.env
+    volumes:
+      - .:/mnt
 
   microservices:
     image: "eth-optimism/rollup-microservices:${MICROSERVICES_TAG}"
