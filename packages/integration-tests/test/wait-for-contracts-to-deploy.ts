@@ -22,5 +22,5 @@ describe('Wait for contracts to deploy', () => {
       await sleep(5000)
       return
     }
-  })
+  }).timeout(1000000)
 })

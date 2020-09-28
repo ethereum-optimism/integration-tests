@@ -15,11 +15,11 @@ if [ -n "$REBUILD" ]; then
 
   if [ -n "$FETCH_DEPS" ]; then
     echo -e "\nFetching dependencies (this will take forever the first time time)..."
-    yarn --cwd $ROOT_DIR --verbose --frozen-lockfile
+    yarn --frozen-lockfile
   fi
 
-  yarn --cwd $ROOT_DIR clean
-  yarn --cwd $ROOT_DIR build
+  yarn clean
+  yarn build
   echo -e "\n\nCode built proceeding with ./wait_for_dependencies.sh...\n\n"
 else
   echo -e "\n\nREBUILD env var not set, calling ./wait_for_dependencies.sh without building...\n\n"

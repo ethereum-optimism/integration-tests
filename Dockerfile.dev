@@ -1,10 +1,11 @@
 FROM node:11
 
 # Used to mount the code so image isn't re-built every time code changes
-WORKDIR /mnt/packages/integration-tests
+WORKDIR /mnt/integration-tests/packages/integration-tests
 
 # This is required for the wait_for_postgres script
 RUN apt-get update
 RUN apt-get install -y postgresql-client
+RUN yarn global add wsrun rimraf typescript mocha
 
 ENTRYPOINT [ "bash", "./exec/build_and_run.sh", "yarn", "run", "ci" ]
