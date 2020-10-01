@@ -88,7 +88,6 @@ describe('Transactions', () => {
     const l1RollupTxs = await poll(getL1RollupTx, 10_000)
     const l1RollupTx = l1RollupTxs[0]
 
-    console.log(l1RollupTx)
     const address = await l1Signer.getAddress()
 
     l1RollupTx.l1_message_sender.should.equal(address)
