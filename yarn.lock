@@ -96,10 +96,10 @@
     ethers-v4 "npm:ethers@4"
     ethers-v5 "npm:ethers@5.0.7"
 
-"@eth-optimism/provider@0.0.1-alpha.2":
-  version "0.0.1-alpha.2"
-  resolved "https://registry.yarnpkg.com/@eth-optimism/provider/-/provider-0.0.1-alpha.2.tgz#3e86dd9a7f104bfa6ce6a6936b5ccf060401a5f1"
-  integrity sha512-l6JNh6w9VABPGeUxoVI50AMDBhe93cX6ylVLNlywwkKqaA8sL74tqe3uBba6P8CfHXqpmDKbIAq4kYHQ+0mzvA==
+"@eth-optimism/provider@0.0.1-alpha.5":
+  version "0.0.1-alpha.5"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/provider/-/provider-0.0.1-alpha.5.tgz#de12925eb31e0ea88db9ff99a0033e0ad1f24755"
+  integrity sha512-ZgDoh0qq56b5IbSXohnxAo4hzBcUIuFMVKTEXflmNwSvKhVaF8fIbUOa3aXnAfP2nrL/IcHluyCZF+CEV/x2aA==
   dependencies:
     "@eth-optimism/core-utils" "0.0.1-alpha.27"
     "@ethersproject/abstract-provider" "^5.0.3"
@@ -4936,9 +4936,9 @@ ethereumjs-common@^1.1.0, ethereumjs-common@^1.3.2, ethereumjs-common@^1.5.0:
   resolved "https://registry.yarnpkg.com/ethereumjs-common/-/ethereumjs-common-1.5.2.tgz#2065dbe9214e850f2e955a80e650cb6999066979"
   integrity sha512-hTfZjwGX52GS2jcVO6E2sx4YuFnf0Fhp5ylo4pEPhEffNln7vS59Hr5sLnp3/QCazFLluuBZ+FZ6J5HTp0EqCA==
 
-"ethereumjs-ovm@git+https://github.com/ethereum-optimism/ethereumjs-vm.git":
+"ethereumjs-ovm@git+https://github.com/ethereum-optimism/ethereumjs-vm":
   version "4.2.0"
-  resolved "git+https://github.com/ethereum-optimism/ethereumjs-vm.git#02ba6e77a88339b04a053b5e653f644acb1555b8"
+  resolved "git+https://github.com/ethereum-optimism/ethereumjs-vm#02ba6e77a88339b04a053b5e653f644acb1555b8"
   dependencies:
     "@types/debug" "^4.1.5"
     "@types/uuid" "^8.3.0"
