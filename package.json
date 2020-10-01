@@ -38,7 +38,6 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "lerna": "^3.13.1",
-    "mocha": "^6.0.2",
     "prettier": "^1.16.4",
     "ts-node": "8.0.2",
     "tslint": "^5.13.1",
@@ -50,6 +49,7 @@
   "dependencies": {
     "bignumber.js": "^9.0.0",
     "chai-bignumber": "^3.0.0",
+    "debug": "^4.2.0",
     "level": "^6.0.0",
     "typescript": "^4.0.3"
   }

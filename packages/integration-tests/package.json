@@ -31,19 +31,21 @@
     "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
   },
   "dependencies": {
-    "@eth-optimism/core-utils": "0.0.1-alpha.30",
-    "@eth-optimism/ovm-toolchain": "0.0.1-alpha.5",
-    "@eth-optimism/provider": "0.0.1-alpha.6",
+    "@eth-optimism/core-utils": "^0.0.1-alpha.30",
+    "@eth-optimism/ovm-toolchain": "^0.0.1-alpha.5",
+    "@eth-optimism/provider": "^0.0.1-alpha.6",
+    "@eth-optimism/rollup-contracts": "^0.0.1-alpha.29",
+    "@eth-optimism/rollup-core": "^0.0.1-alpha.28",
     "@ethersproject/bytes": "^5.0.4",
     "@ethersproject/providers": "^5.0.9",
     "@ethersproject/transactions": "^5.0.5",
-    "@ethersproject/wallet": "^5.0.4"
+    "@ethersproject/wallet": "^5.0.4",
+    "mocha": "^8.1.3"
   },
   "devDependencies": {
     "@types/node": "^12.0.7",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "mocha": "^7.0.1",
     "rimraf": "^2.6.3"
   },
   "publishConfig": {
