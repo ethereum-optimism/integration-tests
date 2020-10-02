@@ -53,7 +53,6 @@ describe('Transactions', () => {
     postgres = new PostgresDB('postgres', 5432, 'test', 'test', 'rollup')
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
     l1Signer = Wallet.fromMnemonic(mnemonic).connect(l1Provider)
-    //l1Signer = Wallet.createRandom().connect(l1Provider)
     const web3 = new Web3Provider(
       ganache.provider({
         mnemonic,
@@ -119,5 +118,5 @@ describe('Transactions', () => {
     const queueResults = await poll(getQueueResult, 10_000)
     const queueResult = queueResults[0]
     queueResult.l1_tx_hash.should.equal(txResponse.hash)
-  }).timeout(100_000_000)
+  })
 })
