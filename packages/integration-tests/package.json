@@ -1,7 +1,7 @@
 {
-  "name": "@eth-optimism/integration-test-utils",
+  "name": "@eth-optimism/integration-tests",
   "version": "0.0.1",
-  "description": "[Optimism] Optimistic Rollup Integration Test Utils",
+  "description": "[Optimism] Optimistic Rollup Integration Test Suite",
   "main": "build/index.js",
   "files": [
     "build/**/*.js"
