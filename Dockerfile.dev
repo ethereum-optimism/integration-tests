@@ -1,7 +1,7 @@
 FROM node:11
 
 # Used to mount the code so image isn't re-built every time code changes
-WORKDIR /mnt/integration-tests/packages/integration-tests
+WORKDIR /mnt/integration-tests
 
 # This is required for the wait_for_postgres script
 RUN apt-get update
