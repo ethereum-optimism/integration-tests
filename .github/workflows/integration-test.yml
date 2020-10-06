@@ -37,7 +37,7 @@ jobs:
 
       - name: Run Integration Tests with Docker Compose
         run: |
-          PKGS=integration-tests docker-compose -f docker-compose.ci.yml up --env-file docker-compose.env --abort-on-container-exit --exit-code-from integration_tests
+          PKGS=integration-tests docker-compose -f docker-compose.ci.yml up --abort-on-container-exit --exit-code-from integration_tests
 
       - name: Logout of Amazon ECR
         run: docker logout ${{ steps.login-ecr.outputs.registry }}
