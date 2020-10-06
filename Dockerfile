@@ -7,7 +7,7 @@ RUN apt-get install -y postgresql-client
 WORKDIR /server
 COPY . /server
 
-RUN yarn --verbose
+RUN yarn
 RUN yarn clean
 RUN yarn build
 
