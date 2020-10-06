@@ -125,6 +125,7 @@ for PACKAGE_PATH in $BASE_DIR/packages/*; do
     GETH_L2_TAG=$GETH_L2_TAG \
     PKGS=$PKGS \
         docker-compose -f $BASE_DIR/docker-compose.local.yml \
+            --env-file $BASE_DIR/docker-compose.env \
             up \
             --exit-code-from integration_tests \
             --abort-on-container-exit
