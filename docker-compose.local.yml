@@ -5,7 +5,7 @@ services:
   integration_tests:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     env_file:
       - docker-compose.env
     volumes:
