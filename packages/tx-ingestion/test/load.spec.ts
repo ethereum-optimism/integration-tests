@@ -14,6 +14,7 @@ import {
 } from '@ethersproject/providers'
 import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
+import { add0x } from '@eth-optimism/core-utils'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractAddress } from '@ethersproject/address'
@@ -39,9 +40,8 @@ describe('Transaction Ingestion', () => {
 
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
-    const deployerAddress = computeAddress(
-      '0xdf8b81d840b9cafc8cd68cf94f093726b174b5f109eba11a3f2a559e5f9e8bce'
-    )
+    // Set up address resolver which we can use to resolve any required contract addresses
+    const deployerAddress = computeAddress(add0x(Config.l1ContractDeploymentPrivateKey()))
     const addressResolverAddress = getContractAddress({
       from: deployerAddress,
       nonce: 0,
