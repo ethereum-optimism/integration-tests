@@ -40,6 +40,6 @@ export class Config {
   }
 
   public static l1ContractDeploymentPrivateKey(): string {
-    return process.env.l1ContractDeploymentPrivateKey
+    return process.env.L1_CONTRACT_DEPLOYMENT_PRIVATE_KEY
   }
 }
