@@ -39,10 +39,6 @@ jobs:
         run: |
           PKGS=integration-tests docker-compose -f docker-compose.ci.yml up --abort-on-container-exit --exit-code-from integration_tests
 
-      - name: Run Transaction Ingestion Tests with Docker Compose
-        run: |
-          PKGS=tx-ingestion docker-compose -f docker-compose.ci.yml up --abort-on-container-exit --exit-code-from integration_tests
-
       - name: Logout of Amazon ECR
         run: docker logout ${{ steps.login-ecr.outputs.registry }}
         if: always()
