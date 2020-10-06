@@ -91,5 +91,5 @@ describe('Transaction Ingestion', () => {
     for (const receipt of receipts) {
       receipt.should.be.a('object')
     }
-  }).timeout(100000)
+  }).timeout(1000000)
 })
