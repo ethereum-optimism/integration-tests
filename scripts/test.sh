@@ -115,7 +115,7 @@ for PACKAGE_PATH in $BASE_DIR/packages/*; do
     PKGS=$(basename $PACKAGE_PATH)
     echo "Running $PKGS test suite"
 
-    docker-compose -f docker-compose.local.yml rm -f
+    docker-compose -f $BASE_DIR/docker-compose.local.yml rm -f
     docker volume ls \
         --filter='label=com.docker.compose.project=optimistic-rollup-integration-tests' \
         | xargs docker volume rm 2&>/dev/null

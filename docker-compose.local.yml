@@ -10,6 +10,8 @@ services:
       - docker-compose.env
     volumes:
       - .:/mnt
+    environment:
+      - "PKGS=${PKGS}"
 
   microservices:
     image: "eth-optimism/rollup-microservices:${MICROSERVICES_TAG}"

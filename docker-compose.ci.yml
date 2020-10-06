@@ -9,6 +9,8 @@ services:
       dockerfile: Dockerfile
     env_file:
       - docker-compose.env
+    environment:
+      - "PKGS=${PKGS}"
 
   microservices:
     image: <AWS_CI_AWS_ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/optimism/rollup-microservices:latest
