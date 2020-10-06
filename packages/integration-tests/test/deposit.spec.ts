@@ -63,7 +63,9 @@ describe('Transactions', () => {
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
     // Set up address resolver which we can use to resolve any required contract addresses
-    const deployerAddress = computeAddress(add0x(Config.l1ContractDeploymentPrivateKey()))
+    const deployerAddress = computeAddress(
+      add0x(Config.l1ContractDeploymentPrivateKey())
+    )
     const addressResolverAddress = getContractAddress({
       from: deployerAddress,
       nonce: 0,
