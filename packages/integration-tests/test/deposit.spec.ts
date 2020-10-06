@@ -9,6 +9,7 @@ import {
 import { Wallet } from '@ethersproject/wallet'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { PostgresDB } from '@eth-optimism/core-db'
+import { add0x } from '@eth-optimism/core-utils'
 import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
 import { getContractFactory } from '@eth-optimism/rollup-contracts'
 import { getContractAddress } from '@ethersproject/address'
@@ -44,7 +45,7 @@ const poll = async (
 
 describe('Transactions', () => {
   let l1Provider: JsonRpcProvider
-  let l1Signer: Wallet
+  let l1Wallet: Wallet
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
   let postgres: PostgresDB
@@ -52,7 +53,7 @@ describe('Transactions', () => {
   before(async () => {
     postgres = new PostgresDB('postgres', 5432, 'test', 'test', 'rollup')
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-    l1Signer = Wallet.fromMnemonic(mnemonic).connect(l1Provider)
+    l1Wallet = Wallet.fromMnemonic(mnemonic).connect(l1Provider)
     const web3 = new Web3Provider(
       ganache.provider({
         mnemonic,
@@ -62,15 +63,13 @@ describe('Transactions', () => {
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
     // Set up address resolver which we can use to resolve any required contract addresses
-    const deployerAddress = computeAddress(
-      '0xdf8b81d840b9cafc8cd68cf94f093726b174b5f109eba11a3f2a559e5f9e8bce'
-    )
+    const deployerAddress = computeAddress(add0x(Config.l1ContractDeploymentPrivateKey()))
     const addressResolverAddress = getContractAddress({
       from: deployerAddress,
       nonce: 0,
     })
     const AddressResolverFactory = getContractFactory('AddressResolver')
-    addressResolver = AddressResolverFactory.connect(l1Signer).attach(
+    addressResolver = AddressResolverFactory.connect(l1Wallet).attach(
       addressResolverAddress
     )
 
@@ -93,7 +92,7 @@ describe('Transactions', () => {
       'L1ToL2TransactionQueue'
     )
     const l1ToL2TransactionQueue: Contract = L1ToL2TransactionQueueFactory.connect(
-      l1Signer
+      l1Wallet
     ).attach(l1ToL2TransactionQueueAddress)
 
     // Send an L1ToL2Transaction
@@ -103,7 +102,7 @@ describe('Transactions', () => {
       input
     )
 
-    const txResponse = await l1Signer.sendTransaction({
+    const txResponse = await l1Wallet.sendTransaction({
       data: calldata,
       to: l1ToL2TransactionQueueAddress,
     })
@@ -116,7 +115,7 @@ describe('Transactions', () => {
     const l1RollupTxs = await poll(getL1RollupTx, 10_000)
     const l1RollupTx = l1RollupTxs[0]
 
-    const address = await l1Signer.getAddress()
+    const address = await l1Wallet.getAddress()
     l1RollupTx.l1_message_sender.should.equal(address)
     l1RollupTx.queue_origin.should.equal(QueueOrigin.L1_TO_L2_QUEUE)
 

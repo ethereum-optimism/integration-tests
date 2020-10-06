@@ -38,4 +38,8 @@ export class Config {
   public static StateCommitmentChainContractAddress(): string {
     return process.env.STATE_COMMITMENT_CHAIN_CONTRACT_ADDRESS
   }
+
+  public static l1ContractDeploymentPrivateKeyl1ContractDeploymentPrivateKey(): string {
+    return process.env.l1ContractDeploymentPrivateKey
+  }
 }
