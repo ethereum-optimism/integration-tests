@@ -1,0 +1,57 @@
+{
+  "name": "@eth-optimism/tx-ingestion",
+  "version": "0.0.1",
+  "description": "[Optimism] Optimistic Rollup Integration Test Utils",
+  "main": "build/index.js",
+  "files": [
+    "build/**/*.js"
+  ],
+  "scripts": {
+    "all": "yarn clean && yarn build && yarn wait && yarn test && yarn fix && yarn lint",
+    "build": "tsc -p .",
+    "clean": "rimraf build/",
+    "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
+    "lint": "tslint --format stylish --project .",
+    "wait": "mocha --require ts-node/register 'test/wait-for-contracts-to-deploy.ts' --timeout 50000 --exit",
+    "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 30000 --exit",
+    "ci": "yarn wait && yarn test"
+  },
+  "keywords": [
+    "ethereum",
+    "client",
+    "optimistic",
+    "rollup",
+    "test"
+  ],
+  "homepage": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests",
+  "license": "MIT",
+  "author": "Optimism",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
+  },
+  "dependencies": {
+    "@eth-optimism/core-db": "^0.0.1-alpha.30",
+    "@eth-optimism/core-utils": "^0.0.1-alpha.30",
+    "@eth-optimism/ovm-toolchain": "^0.0.1-alpha.5",
+    "@eth-optimism/provider": "^0.0.1-alpha.6",
+    "@eth-optimism/rollup-contracts": "^0.0.1-alpha.29",
+    "@eth-optimism/rollup-core": "^0.0.1-alpha.28",
+    "@ethersproject/address": "^5.0.4",
+    "@ethersproject/bytes": "^5.0.4",
+    "@ethersproject/contracts": "^5.0.4",
+    "@ethersproject/providers": "^5.0.9",
+    "@ethersproject/transactions": "^5.0.5",
+    "@ethersproject/wallet": "^5.0.4",
+    "mocha": "^8.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^12.0.7",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "rimraf": "^2.6.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

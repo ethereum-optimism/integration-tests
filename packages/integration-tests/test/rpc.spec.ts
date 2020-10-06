@@ -6,7 +6,6 @@
 
 import './setup'
 import { Config } from '../src/config'
-
 import { JsonRpcServer } from '@eth-optimism/core-utils'
 import { Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'

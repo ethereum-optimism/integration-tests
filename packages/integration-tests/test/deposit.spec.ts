@@ -43,9 +43,9 @@ const poll = async (
 }
 
 describe('Transactions', () => {
-  let l1Provider: Provider
+  let l1Provider: JsonRpcProvider
   let l1Signer: Wallet
-  let l2Provider: Provider
+  let l2Provider: JsonRpcProvider
   let addressResolver: Contract
   let postgres: PostgresDB
 
@@ -73,9 +73,18 @@ describe('Transactions', () => {
     addressResolver = AddressResolverFactory.connect(l1Signer).attach(
       addressResolverAddress
     )
+
+    // Depends on custom fork of ganache
+    // turn on automine
+    await l1Provider.send('evm_mine_interval', [2])
   })
 
-  it('should allow us to get the l1ToL2TxQueueAddress', async () => {
+  after(async () => {
+    // turn off automine
+    await l1Provider.send('evm_mine_interval', [0])
+  })
+
+  it('should send a lot of transactions', async () => {
     // Set up L1ToL2TransactionQueue contract object
     const l1ToL2TransactionQueueAddress = await addressResolver.getAddress(
       'L1ToL2TransactionQueue'
@@ -118,5 +127,5 @@ describe('Transactions', () => {
     const queueResults = await poll(getQueueResult, 10_000)
     const queueResult = queueResults[0]
     queueResult.l1_tx_hash.should.equal(txResponse.hash)
-  })
+  }).timeout(100000)
 })
