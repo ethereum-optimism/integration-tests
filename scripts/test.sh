@@ -109,11 +109,23 @@ POSTGRES_TAG=$POSTGRES_TAG \
 GETH_L2_TAG=$GETH_L2_TAG \
     $SCRIPTS_DIR/build-local.sh
 
-MICROSERVICES_TAG=$MICROSERVICES_TAG \
-POSTGRES_TAG=$POSTGRES_TAG \
-GETH_L2_TAG=$GETH_L2_TAG \
-    docker-compose \
-        -f $BASE_DIR/docker-compose.local.yml up \
-        --exit-code-from integration_tests \
-        --abort-on-container-exit \
-        | grep -E --color=always "$LOG_FILTER"
+# The directory name must match the package name with @eth-optimism/ prefix
+for PACKAGE_PATH in $BASE_DIR/packages/*; do
+    [ -e "$PACKAGE_PATH" ] || continue
+    PKGS=$(basename $PACKAGE_PATH)
+    echo "Running $PKGS test suite"
+
+    docker-compose -f docker-compose.local.yml rm -f
+    docker volume ls \
+        --filter='label=com.docker.compose.project=optimistic-rollup-integration-tests' \
+        | xargs docker volume rm 2&>/dev/null
+
+    MICROSERVICES_TAG=$MICROSERVICES_TAG \
+    POSTGRES_TAG=$POSTGRES_TAG \
+    GETH_L2_TAG=$GETH_L2_TAG \
+    PKGS=$PKGS \
+        docker-compose -f $BASE_DIR/docker-compose.local.yml \
+            up \
+            --exit-code-from integration_tests \
+            --abort-on-container-exit
+done
