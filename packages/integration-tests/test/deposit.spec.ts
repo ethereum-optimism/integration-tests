@@ -16,7 +16,6 @@ import { getContractAddress } from '@ethersproject/address'
 import { Contract } from '@ethersproject/contracts'
 import { computeAddress } from '@ethersproject/transactions'
 import { QueueOrigin, BatchSubmissionStatus } from '@eth-optimism/rollup-core'
-import { mainModule } from 'process'
 
 // Commonly used test mnemonic
 const mnemonic =
@@ -62,10 +61,9 @@ describe('Transactions', () => {
 
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
+    const key = add0x(Config.l1ContractDeploymentPrivateKey())
     // Set up address resolver which we can use to resolve any required contract addresses
-    const deployerAddress = computeAddress(
-      add0x(Config.l1ContractDeploymentPrivateKey())
-    )
+    const deployerAddress = computeAddress(key)
     const addressResolverAddress = getContractAddress({
       from: deployerAddress,
       nonce: 0,
@@ -74,7 +72,6 @@ describe('Transactions', () => {
     addressResolver = AddressResolverFactory.connect(l1Wallet).attach(
       addressResolverAddress
     )
-
     // Depends on custom fork of ganache
     // turn on automine
     await l1Provider.send('evm_mine_interval', [2])
