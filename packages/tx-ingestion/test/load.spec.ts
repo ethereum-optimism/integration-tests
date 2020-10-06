@@ -67,7 +67,7 @@ describe('Transaction Ingestion', () => {
   })
 
   it('should send a ton of transactions', async () => {
-    const receipts = [];
+    const receipts = []
 
     for (let i = 0; i < 5; i++) {
       const input = ['0x' + '01'.repeat(20), 500_000, '0x' + '00']
