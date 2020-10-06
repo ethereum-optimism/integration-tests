@@ -1775,6 +1775,11 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.13.tgz#8a3801f6655179d1803d81e94a2e4aaf317abd16"
   integrity sha512-o3SGYRlOpvLFpwJA6Sl1UPOwKFEvE4FxTEB/c9XHI2whdnd4kmPVkNLL8gY4vWGBxWWDumzLbKsAhEH5SKn37Q==
 
+"@types/debug@^4.1.5":
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.5.tgz#b14efa8852b7768d898906613c23f688713e02cd"
+  integrity sha512-Q1y515GcOdTHgagaVFhHnIFQ38ygs/kmxdNpvpou+raI9UO3YZcHDngBSYKQklcKlvA7iuQlmIKbzvmxcOE9CQ==
+
 "@types/ganache-core@^2.1.2":
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/@types/ganache-core/-/ganache-core-2.7.0.tgz#867ecc7f3f34a9b7bfac45567db8fab1d051c1ab"
@@ -1888,6 +1893,11 @@
   version "1.10.24"
   resolved "https://registry.yarnpkg.com/@types/underscore/-/underscore-1.10.24.tgz#dede004deed3b3f99c4db0bdb9ee21cae25befdd"
   integrity sha512-T3NQD8hXNW2sRsSbLNjF/aBo18MyJlbw0lSpQHB/eZZtScPdexN4HSa8cByYwTw9Wy7KuOFr81mlDQcQQaZ79w==
+
+"@types/uuid@^8.3.0":
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-8.3.0.tgz#215c231dff736d5ba92410e6d602050cce7e273f"
+  integrity sha512-eQ9qFW/fhfGJF8WKHGEHZEyVWfZxrT+6CLIJGBcZPfxUh/+BnEj+UCGYMlr9qZuX/2AltsvwrGqp0LhEW8D0zQ==
 
 "@types/web3@1.0.19":
   version "1.0.19"
@@ -5115,6 +5125,7 @@ ethereum-cryptography@^0.1.2, ethereum-cryptography@^0.1.3:
     ethers "^4.0.45"
 
 "ethereum-waffle-v3@npm:ethereum-waffle@3", ethereum-waffle@^3.0.0:
+  name ethereum-waffle-v3
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/ethereum-waffle/-/ethereum-waffle-3.1.1.tgz#2a63475104281dca1fd2ffed12ab8f6605219d51"
   integrity sha512-kiJo7PPGKsRfNiQOB8Z/ogLTHrU7Cj7VOZrdU3nyx9xXobkTFN9F9FcwdYZRg3gw3C1XnuOd18Jk2hPfuQbORA==
@@ -5261,21 +5272,23 @@ ethereumjs-common@^1.1.0, ethereumjs-common@^1.3.2, ethereumjs-common@^1.5.0:
   resolved "https://registry.yarnpkg.com/ethereumjs-common/-/ethereumjs-common-1.5.2.tgz#2065dbe9214e850f2e955a80e650cb6999066979"
   integrity sha512-hTfZjwGX52GS2jcVO6E2sx4YuFnf0Fhp5ylo4pEPhEffNln7vS59Hr5sLnp3/QCazFLluuBZ+FZ6J5HTp0EqCA==
 
-"ethereumjs-ovm@git+https://github.com/ethereum-optimism/ethereumjs-vm.git":
+"ethereumjs-ovm@git+https://github.com/ethereum-optimism/ethereumjs-vm":
   version "4.2.0"
-  resolved "git+https://github.com/ethereum-optimism/ethereumjs-vm.git#137cb683522bf70b7eb2ec2d1c4677ceab8c8c8f"
+  resolved "git+https://github.com/ethereum-optimism/ethereumjs-vm#02ba6e77a88339b04a053b5e653f644acb1555b8"
   dependencies:
+    "@types/debug" "^4.1.5"
+    "@types/uuid" "^8.3.0"
     async "^2.1.2"
     async-eventemitter "^0.2.2"
     core-js-pure "^3.0.1"
-    debug "^4.2.0"
+    debug "^4.1.1"
     ethereumjs-account "^3.0.0"
     ethereumjs-block "^2.2.2"
     ethereumjs-blockchain "^4.0.3"
     ethereumjs-common "^1.5.0"
     ethereumjs-tx "^2.1.2"
     ethereumjs-util "^6.2.0"
-    ethers "^5.0.14"
+    ethers "^5.0.0"
     fake-merkle-patricia-tree "^1.0.1"
     functional-red-black-tree "^1.0.1"
     merkle-patricia-tree "^2.3.2"
@@ -5546,7 +5559,7 @@ ethers@5.0.0:
     "@ethersproject/web" "^5.0.0"
     "@ethersproject/wordlists" "^5.0.0"
 
-ethers@^5.0.0, ethers@^5.0.1, ethers@^5.0.14:
+ethers@^5.0.0, ethers@^5.0.1:
   version "5.0.15"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.15.tgz#958818605ea1bfe5a745bbe6b6f4f2c5c0e4637c"
   integrity sha512-ODBTkK+dg44d4yzLgD/w3IxDBa9nLFBF4z8OgICISvkVO2uLLmlR5boqv61PtTMTIPydT9wTn5C1cUntHKFkqQ==
@@ -8584,9 +8597,9 @@ merkle-patricia-tree@^3.0.0:
     rlp "^2.0.0"
     semaphore ">=1.0.1"
 
-"merkle-patricia-tree@git+https://github.com/kfichter/merkle-patricia-tree.git":
+"merkle-patricia-tree@git+https://github.com/kfichter/merkle-patricia-tree":
   version "3.0.0"
-  resolved "git+https://github.com/kfichter/merkle-patricia-tree.git#ebd10c405be8ae909f1f82dea275a0e9ec1c8e46"
+  resolved "git+https://github.com/kfichter/merkle-patricia-tree#ebd10c405be8ae909f1f82dea275a0e9ec1c8e46"
   dependencies:
     ethereumjs-util "^7.0.0"
     level-mem "^5.0.1"
