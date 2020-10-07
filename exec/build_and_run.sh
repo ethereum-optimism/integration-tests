@@ -12,7 +12,7 @@ if [ -n "$REBUILD" ]; then
 
   if [ -n "$FETCH_DEPS" ]; then
     echo -e "\nFetching dependencies (this will take forever the first time time)..."
-    yarn --frozen-lockfile --verbose
+    yarn --frozen-lockfile
   fi
 
   yarn clean
