@@ -11,6 +11,4 @@ RUN yarn
 RUN yarn clean
 RUN yarn build
 
-WORKDIR /server/packages/integration-tests
-
 ENTRYPOINT [ "bash", "./exec/wait_for_dependencies.sh", "yarn", "run", "ci" ]
