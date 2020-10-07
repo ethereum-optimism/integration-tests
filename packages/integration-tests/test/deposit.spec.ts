@@ -125,5 +125,5 @@ describe('Transactions', () => {
     const queueResults = await poll(getQueueResult, 10_000)
     const queueResult = queueResults[0]
     queueResult.l1_tx_hash.should.equal(txResponse.hash)
-  }).timeout(1000000)
+  }).timeout(10000)
 })
