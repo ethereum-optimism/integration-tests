@@ -23,9 +23,11 @@ services:
 
   l1_chain:
     image: ethereumoptimism/ganache-cli:latest
-    entrypoint: node /app/ganache-core.docker.cli.js -p 9545 --gasPrice="0x0" --callGasLimit="0x1fffffffffffff" --gasLimit="0x1fffffffffffff" --account="0xdf8b81d840b9cafc8cd68cf94f093726b174b5f109eba11a3f2a559e5f9e8bce,1000000000000000000000" --account="0x06caa6f48604a58872e27db8c2980584e20faab37613f51383bb5be62db80c50,100000000000000000000"
+    entrypoint: node /app/ganache-core.docker.cli.js -p 9545 --gasPrice="0x0" --callGasLimit="0x1fffffffffffff" --gasLimit="0x1fffffffffffff" --account="0xdf8b81d840b9cafc8cd68cf94f093726b174b5f109eba11a3f2a559e5f9e8bce,1000000000000000000000" --account="0x06caa6f48604a58872e27db8c2980584e20faab37613f51383bb5be62db80c50,100000000000000000000" --db /mnt/db
     ports:
       - 9545:9545
+    volumes:
+      - ganache:/mnt/db
 
   postgres:
     image: "eth-optimism/postgres:${POSTGRES_TAG}"
@@ -39,7 +41,7 @@ services:
   geth_l2:
     image: "eth-optimism/geth:${GETH_L2_TAG}"
     volumes:
-      - l2-node-data:/mnt/l2-node/l2:rw
+      - geth:/mnt/l2-node/l2:rw
     env_file:
       - docker-compose.env
     ports:
@@ -49,3 +51,5 @@ volumes:
   l1-node-data:
   l2-node-data:
   postgres:
+  geth:
+  ganache:
