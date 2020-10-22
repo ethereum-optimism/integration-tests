@@ -6,6 +6,7 @@ WORKDIR /mnt/integration-tests
 # This is required for the wait_for_postgres script
 RUN apt-get update
 RUN apt-get install -y postgresql-client
-RUN yarn global add wsrun rimraf typescript mocha
+# TODO(mark): remove `--ignore-engines` after upgrading node version
+RUN yarn global add --ignore-engines wsrun rimraf typescript mocha
 
 ENTRYPOINT [ "bash", "./exec/build_and_run.sh", "yarn", "run", "ci" ]
