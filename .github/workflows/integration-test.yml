@@ -32,7 +32,7 @@ jobs:
           git fetch gh $GITHUB_SHA
           git checkout $GITHUB_SHA
           cd $HOME/optimism-integration
-          ./build.sh
+          ./docker/build.sh
       - name: Test
         run: |
           cd $HOME/optimism-integration
