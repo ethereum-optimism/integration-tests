@@ -49,7 +49,7 @@ describe('Transaction Ingestion', () => {
 
     const addressResolverAddress = add0x(Config.AddressResolverAddress())
 
-    const AddressResolverFactory = getContractFactory('AddressManager')
+    const AddressResolverFactory = getContractFactory('Lib_AddressManager')
     addressResolver = AddressResolverFactory.connect(l1Signer).attach(
       addressResolverAddress
     )
