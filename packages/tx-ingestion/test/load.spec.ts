@@ -4,8 +4,7 @@
  * https://github.com/ethereum-optimism
  */
 
-import { mnemonic } from './setup'
-import { Config } from '../src/config'
+import { Config } from '../../../common'
 
 import {
   Provider,
@@ -26,8 +25,11 @@ describe('Transaction Ingestion', () => {
   let l1Signer: Wallet
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
-  let l1ToL2TransactionQueue: Contract
-  let l1ToL2TransactionQueueAddress
+
+  let canonicalTransactionChain: Contract
+  let ctcAddress: string
+
+  const mnemonic = Config.Mnemonic()
 
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
@@ -42,30 +44,27 @@ describe('Transaction Ingestion', () => {
 
     // Set up address resolver which we can use to resolve any required contract addresses
     const deployerAddress = computeAddress(
-      add0x(Config.l1ContractDeploymentPrivateKey())
+      add0x(Config.DeployerPrivateKey())
     )
-    const addressResolverAddress = getContractAddress({
-      from: deployerAddress,
-      nonce: 0,
-    })
 
-    const AddressResolverFactory = getContractFactory('AddressResolver')
+    const addressResolverAddress = add0x(Config.AddressResolverAddress())
+
+    const AddressResolverFactory = getContractFactory('AddressManager')
     addressResolver = AddressResolverFactory.connect(l1Signer).attach(
       addressResolverAddress
     )
 
-    l1ToL2TransactionQueueAddress = await addressResolver.getAddress(
-      'L1ToL2TransactionQueue'
-    )
-    const L1ToL2TransactionQueueFactory = getContractFactory(
-      'L1ToL2TransactionQueue'
+    ctcAddress = await addressResolver.getAddress('OVM_CanonicalTransactionChain')
+
+    const CanonicalTransactionChainFactory = getContractFactory(
+      'OVM_CanonicalTransactionChain'
     )
 
-    l1ToL2TransactionQueue = L1ToL2TransactionQueueFactory.connect(
+    canonicalTransactionChain = CanonicalTransactionChainFactory.connect(
       l1Signer
-    ).attach(l1ToL2TransactionQueueAddress)
+    ).attach(ctcAddress)
 
-    await l1Provider.send('evm_mine_interval', [2])
+    //await l1Provider.send('evm_mine_interval', [2])
   })
 
   it('should send a ton of transactions', async () => {
@@ -73,14 +72,14 @@ describe('Transaction Ingestion', () => {
 
     for (let i = 0; i < 5; i++) {
       const input = ['0x' + '01'.repeat(20), 500_000, '0x' + '00']
-      const calldata = await l1ToL2TransactionQueue.interface.encodeFunctionData(
-        'enqueueL1ToL2Message',
+      const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
+        'enqueue',
         input
       )
 
       const txResponse = await l1Signer.sendTransaction({
         data: calldata,
-        to: l1ToL2TransactionQueueAddress,
+        to: ctcAddress,
       })
 
       const receipt = await txResponse.wait()

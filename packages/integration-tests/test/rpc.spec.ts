@@ -4,8 +4,7 @@
  * https://github.com/ethereum-optimism
  */
 
-import './setup'
-import { Config } from '../src/config'
+import { Config, etherbase } from '../../../common'
 import { JsonRpcServer } from '@eth-optimism/core-utils'
 import { Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
@@ -14,21 +13,13 @@ import { verifyMessage } from '@ethersproject/wallet'
 import { parse } from '@ethersproject/transactions'
 import { SignatureLike, joinSignature } from '@ethersproject/bytes'
 
-// Commonly used test mnemonic
-const mnemonic =
-  'abandon abandon abandon abandon abandon abandon ' +
-  'abandon abandon abandon abandon abandon about'
-
-// Address derived at m/44'/60'/0'/0 of test mnemonic
-const etherbase = '0x9858EfFD232B4033E47d90003D41EC34EcaEda94'
-
 describe('Transactions', () => {
   let provider
 
   before(async () => {
     const web3 = new Web3Provider(
       ganache.provider({
-        mnemonic,
+        Config.Mnemonic(),
       })
     )
 

@@ -1,5 +1,4 @@
-import './setup'
-import { Config } from '../src/config'
+import { Config } from '../../../common'
 
 import {
   Provider,
@@ -17,40 +16,15 @@ import { Contract } from '@ethersproject/contracts'
 import { computeAddress } from '@ethersproject/transactions'
 import { QueueOrigin, BatchSubmissionStatus } from '@eth-optimism/rollup-core'
 
-// Commonly used test mnemonic
-const mnemonic =
-  'abandon abandon abandon abandon abandon abandon ' +
-  'abandon abandon abandon abandon abandon about'
-
-// Address derived at m/44'/60'/0'/0 of test mnemonic
-const etherbase = '0x9858EfFD232B4033E47d90003D41EC34EcaEda94'
-
-const sleep = (m) => new Promise((r) => setTimeout(r, m))
-
-const poll = async (
-  functionToCall: Function,
-  timeout: number,
-  successCondition: Function = (res: any[]) => res !== null && res.length !== 0,
-  pollInterval: number = 100
-) => {
-  for (let i = 0; i < timeout; i += pollInterval) {
-    const res = await functionToCall()
-    if (successCondition(res)) {
-      return res
-    }
-    await sleep(pollInterval)
-  }
-}
-
 describe('Transactions', () => {
   let l1Provider: JsonRpcProvider
   let l1Wallet: Wallet
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
-  let postgres: PostgresDB
+
+  const mnemonic = Config.Mnemonic()
 
   before(async () => {
-    postgres = new PostgresDB('postgres', 5432, 'test', 'test', 'rollup')
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
     l1Wallet = Wallet.fromMnemonic(mnemonic).connect(l1Provider)
     const web3 = new Web3Provider(
@@ -61,69 +35,40 @@ describe('Transactions', () => {
 
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
-    const key = add0x(Config.l1ContractDeploymentPrivateKey())
-    // Set up address resolver which we can use to resolve any required contract addresses
-    const deployerAddress = computeAddress(key)
-    const addressResolverAddress = getContractAddress({
-      from: deployerAddress,
-      nonce: 0,
-    })
-    const AddressResolverFactory = getContractFactory('AddressResolver')
+    const addressResolverAddress = Config.AddressResolverAddress()
+    const AddressResolverFactory = getContractFactory('AddressManager')
     addressResolver = AddressResolverFactory.connect(l1Wallet).attach(
       addressResolverAddress
     )
-    // Depends on custom fork of ganache
-    // turn on automine
-    await l1Provider.send('evm_mine_interval', [2])
+    //await l1Provider.send('evm_mine_interval', [2])
   })
 
   after(async () => {
-    // turn off automine
-    await l1Provider.send('evm_mine_interval', [0])
+    //await l1Provider.send('evm_mine_interval', [0])
   })
 
   it('should send a lot of transactions', async () => {
-    // Set up L1ToL2TransactionQueue contract object
-    const l1ToL2TransactionQueueAddress = await addressResolver.getAddress(
-      'L1ToL2TransactionQueue'
-    )
-    const L1ToL2TransactionQueueFactory = getContractFactory(
-      'L1ToL2TransactionQueue'
-    )
-    const l1ToL2TransactionQueue: Contract = L1ToL2TransactionQueueFactory.connect(
-      l1Wallet
-    ).attach(l1ToL2TransactionQueueAddress)
+    const ctcAddress = await addressResolver.getAddress('OVM_CanonicalTransactionChain')
 
-    // Send an L1ToL2Transaction
+    const CanonicalTransactionChainFactory = getContractFactory(
+      'OVM_CanonicalTransactionChain'
+    )
+    const canonicalTransactionChain: Contract = CanonicalTransactionChainFactory.connect(
+      l1Wallet
+    ).attach(ctcAddress)
+
     const input = ['0x' + '01'.repeat(20), 500_000, '0x' + '00']
-    const calldata = await l1ToL2TransactionQueue.interface.encodeFunctionData(
-      'enqueueL1ToL2Message',
+    const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
+      'enqueue',
       input
     )
 
     const txResponse = await l1Wallet.sendTransaction({
       data: calldata,
-      to: l1ToL2TransactionQueueAddress,
+      to: ctcAddress,
     })
     const txReceipt = await txResponse.wait()
 
-    const getL1RollupTx = () =>
-      postgres.select(
-        `SELECT * FROM l1_rollup_tx WHERE l1_tx_hash = '${txResponse.hash}'`
-      )
-    const l1RollupTxs = await poll(getL1RollupTx, 10_000)
-    const l1RollupTx = l1RollupTxs[0]
-
-    const address = await l1Wallet.getAddress()
-    l1RollupTx.l1_message_sender.should.equal(address)
-    l1RollupTx.queue_origin.should.equal(QueueOrigin.L1_TO_L2_QUEUE)
-
-    const getQueueResult = () =>
-      postgres.select(
-        `SELECT * FROM geth_submission_queue WHERE l1_tx_hash = '${txResponse.hash}'`
-      )
-    const queueResults = await poll(getQueueResult, 10_000)
-    const queueResult = queueResults[0]
-    queueResult.l1_tx_hash.should.equal(txResponse.hash)
+    console.log(txResponse)
   }).timeout(10000)
 })

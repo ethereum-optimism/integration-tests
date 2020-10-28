@@ -7,14 +7,13 @@
     "build/**/*.js"
   ],
   "scripts": {
-    "all": "yarn clean && yarn build && yarn wait && yarn test && yarn fix && yarn lint",
+    "all": "yarn clean && yarn build && && yarn test && yarn fix && yarn lint",
     "build": "tsc -p .",
     "clean": "rimraf build/",
     "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
     "lint": "tslint --format stylish --project .",
-    "wait": "mocha --require ts-node/register 'test/wait-for-contracts-to-deploy.ts' --timeout 50000 --exit",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 30000 --exit",
-    "ci": "yarn wait && yarn test"
+    "ci": "yarn test"
   },
   "keywords": [
     "ethereum",
