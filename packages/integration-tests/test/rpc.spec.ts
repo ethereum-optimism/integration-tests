@@ -102,7 +102,7 @@ describe('Transactions', () => {
   it('should estimate gas', async () => {
     const template = {
       to: etherbase,
-      gasLimit: 21000,
+      gasLimit: 21004,
       gasPrice: 0,
       value: 0,
       data: '',
@@ -133,7 +133,7 @@ describe('Transactions', () => {
   it('should get transaction (l2 metadata)', async () => {
     const tx = {
       to: etherbase,
-      gasLimit: 21000,
+      gasLimit: 21004,
       gasPrice: 0,
       data: '0x',
       value: 0,
