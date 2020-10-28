@@ -18,7 +18,7 @@ import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractAddress } from '@ethersproject/address'
 import { computeAddress } from '@ethersproject/transactions'
-import { getContractFactory } from '@eth-optimism/rollup-contracts'
+import { getContractFactory } from '@eth-optimism/contracts'
 
 describe('Transaction Ingestion', () => {
   let l1Provider: JsonRpcProvider
