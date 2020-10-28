@@ -19,7 +19,7 @@ describe('Transactions', () => {
   before(async () => {
     const web3 = new Web3Provider(
       ganache.provider({
-        Config.Mnemonic(),
+        mnemonic: Config.Mnemonic(),
       })
     )
 
