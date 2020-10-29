@@ -143,6 +143,7 @@ describe('Transactions', () => {
     const result = await signer.sendTransaction(tx)
 
     const txn = await provider.getTransaction(result.hash)
+
     txn.txType.should.be.a('string')
     txn.queueOrigin.should.be.a('string')
   })

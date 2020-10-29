@@ -10,13 +10,14 @@ import { ganache } from '@eth-optimism/ovm-toolchain'
 import { PostgresDB } from '@eth-optimism/core-db'
 import { add0x } from '@eth-optimism/core-utils'
 import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
-import { getContractFactory } from '@eth-optimism/rollup-contracts'
+import { getContractFactory } from '@eth-optimism/contracts'
 import { getContractAddress } from '@ethersproject/address'
 import { Contract } from '@ethersproject/contracts'
 import { computeAddress } from '@ethersproject/transactions'
 import { QueueOrigin, BatchSubmissionStatus } from '@eth-optimism/rollup-core'
+import { defaultPath } from '@ethersproject/hdnode'
 
-describe('Transactions', () => {
+describe.only('Transactions', () => {
   let l1Provider: JsonRpcProvider
   let l1Wallet: Wallet
   let l2Provider: JsonRpcProvider
@@ -26,7 +27,7 @@ describe('Transactions', () => {
 
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-    l1Wallet = Wallet.fromMnemonic(mnemonic).connect(l1Provider)
+    l1Wallet = new Wallet(Config.DeployerPrivateKey()).connect(l1Provider)
     const web3 = new Web3Provider(
       ganache.provider({
         mnemonic,
@@ -36,18 +37,14 @@ describe('Transactions', () => {
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
     const addressResolverAddress = Config.AddressResolverAddress()
-    const AddressResolverFactory = getContractFactory('AddressManager')
+
+    const AddressResolverFactory = getContractFactory('Lib_AddressManager')
     addressResolver = AddressResolverFactory.connect(l1Wallet).attach(
       addressResolverAddress
     )
-    //await l1Provider.send('evm_mine_interval', [2])
   })
 
-  after(async () => {
-    //await l1Provider.send('evm_mine_interval', [0])
-  })
-
-  it('should send a lot of transactions', async () => {
+  it('should enqueue a transaction', async () => {
     const ctcAddress = await addressResolver.getAddress('OVM_CanonicalTransactionChain')
 
     const CanonicalTransactionChainFactory = getContractFactory(
@@ -69,6 +66,7 @@ describe('Transactions', () => {
     })
     const txReceipt = await txResponse.wait()
 
-    console.log(txResponse)
+    console.log(txReceipt)
+
   }).timeout(10000)
 })

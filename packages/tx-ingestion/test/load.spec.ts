@@ -39,7 +39,6 @@ describe('Transaction Ingestion', () => {
         mnemonic,
       })
     )
-
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
     // Set up address resolver which we can use to resolve any required contract addresses
@@ -63,8 +62,6 @@ describe('Transaction Ingestion', () => {
     canonicalTransactionChain = CanonicalTransactionChainFactory.connect(
       l1Signer
     ).attach(ctcAddress)
-
-    //await l1Provider.send('evm_mine_interval', [2])
   })
 
   it('should send a ton of transactions', async () => {
