@@ -17,7 +17,7 @@ import { computeAddress } from '@ethersproject/transactions'
 import { QueueOrigin, BatchSubmissionStatus } from '@eth-optimism/rollup-core'
 import { defaultPath } from '@ethersproject/hdnode'
 
-describe.only('Transactions', () => {
+describe('Transactions', () => {
   let l1Provider: JsonRpcProvider
   let l1Wallet: Wallet
   let l2Provider: JsonRpcProvider
@@ -60,13 +60,17 @@ describe.only('Transactions', () => {
       input
     )
 
+    const pre = await l1Provider.getBlock('latest')
+
     const txResponse = await l1Wallet.sendTransaction({
       data: calldata,
       to: ctcAddress,
     })
-    const txReceipt = await txResponse.wait()
+    await txResponse.wait()
 
-    console.log(txReceipt)
+    const post = await l1Provider.getBlock('latest')
+    console.log(pre)
+    console.log(post)
 
   }).timeout(10000)
 })
