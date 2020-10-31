@@ -4,7 +4,7 @@
  * https://github.com/ethereum-optimism
  */
 
-import { Config } from '../../../common'
+import { Config, sleep, poll } from '../../../common'
 
 import {
   Provider,
@@ -19,6 +19,7 @@ import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractAddress } from '@ethersproject/address'
 import { computeAddress } from '@ethersproject/transactions'
 import { getContractFactory } from '@eth-optimism/contracts'
+import assert = require('assert')
 
 describe('Transaction Ingestion', () => {
   let l1Provider: JsonRpcProvider
@@ -31,9 +32,11 @@ describe('Transaction Ingestion', () => {
 
   const mnemonic = Config.Mnemonic()
 
+  let pre
+
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-    l1Signer = Wallet.fromMnemonic(mnemonic).connect(l1Provider)
+    l1Signer = new Wallet(Config.DeployerPrivateKey()).connect(l1Provider)
     const web3 = new Web3Provider(
       ganache.provider({
         mnemonic,
@@ -41,13 +44,7 @@ describe('Transaction Ingestion', () => {
     )
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
 
-    // Set up address resolver which we can use to resolve any required contract addresses
-    const deployerAddress = computeAddress(
-      add0x(Config.DeployerPrivateKey())
-    )
-
     const addressResolverAddress = add0x(Config.AddressResolverAddress())
-
     const AddressResolverFactory = getContractFactory('Lib_AddressManager')
     addressResolver = AddressResolverFactory.connect(l1Signer).attach(
       addressResolverAddress
@@ -62,13 +59,20 @@ describe('Transaction Ingestion', () => {
     canonicalTransactionChain = CanonicalTransactionChainFactory.connect(
       l1Signer
     ).attach(ctcAddress)
+
+    l2Provider.on('pending', (tx) => {
+      console.log('PENDING TX')
+      console.log(tx)
+    })
   })
 
-  it('should send a ton of transactions', async () => {
+  it('should enqueue some transactions', async () => {
     const receipts = []
 
+    pre = await l2Provider.getBlock('latest')
+
     for (let i = 0; i < 5; i++) {
-      const input = ['0x' + '01'.repeat(20), 500_000, '0x' + '00']
+      const input = ['0x' + `${i}`.repeat(40), 500_000, `0x0${i}`]
       const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
         'enqueue',
         input
@@ -83,9 +87,27 @@ describe('Transaction Ingestion', () => {
       receipts.push(receipt)
     }
 
-    // TODO(mark): add watcher and interleave txs directly to L2
     for (const receipt of receipts) {
       receipt.should.be.a('object')
     }
-  }).timeout(1000000)
-})
+  })
+
+  it('should wait and fetch blocks', async () => {
+    // wait until each tx from the previous test has
+    // been processed
+    let tip;
+    do {
+      tip = await l2Provider.getBlock('latest')
+      console.log(`l2 height: ${tip.number}`)
+      await sleep(5000)
+    } while (tip.number !== pre.number + 5)
+
+    for (let i = pre.number + 1; i < pre.number + 5; i++) {
+      const block = await l2Provider.getBlock(i)
+      const hash = block.transactions[0]
+      const tx = await l2Provider.getTransaction(hash)
+      console.log(tx)
+      assert.equal(tx.to, '0x' + `${i-1}`.repeat(40))
+    }
+  }).timeout(10000000)
+}).timeout(1000000000)

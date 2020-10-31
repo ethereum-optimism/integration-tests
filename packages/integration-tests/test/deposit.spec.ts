@@ -60,17 +60,10 @@ describe('Transactions', () => {
       input
     )
 
-    const pre = await l1Provider.getBlock('latest')
-
     const txResponse = await l1Wallet.sendTransaction({
       data: calldata,
       to: ctcAddress,
     })
     await txResponse.wait()
-
-    const post = await l1Provider.getBlock('latest')
-    console.log(pre)
-    console.log(post)
-
   }).timeout(10000)
 })
