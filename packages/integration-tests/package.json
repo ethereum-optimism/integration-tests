@@ -7,14 +7,13 @@
     "build/**/*.js"
   ],
   "scripts": {
-    "all": "yarn clean && yarn build && yarn wait && yarn test && yarn fix && yarn lint",
+    "all": "yarn clean && yarn build && yarn test && yarn fix && yarn lint",
     "build": "tsc -p .",
     "clean": "rimraf build/",
     "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
     "lint": "tslint --format stylish --project .",
-    "wait": "mocha --require ts-node/register 'test/wait-for-contracts-to-deploy.ts' --timeout 50000 --exit",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 30000 --exit",
-    "ci": "yarn wait && yarn test"
+    "ci": "yarn test"
   },
   "keywords": [
     "ethereum",
@@ -34,8 +33,7 @@
     "@eth-optimism/core-db": "^0.0.1-alpha.30",
     "@eth-optimism/core-utils": "^0.0.1-alpha.30",
     "@eth-optimism/ovm-toolchain": "^0.0.1-alpha.5",
-    "@eth-optimism/provider": "^0.0.1-alpha.6",
-    "@eth-optimism/rollup-contracts": "^0.0.1-alpha.29",
+    "@eth-optimism/provider": "^0.0.1-alpha.7",
     "@eth-optimism/rollup-core": "^0.0.1-alpha.28",
     "@ethersproject/address": "^5.0.4",
     "@ethersproject/bytes": "^5.0.4",

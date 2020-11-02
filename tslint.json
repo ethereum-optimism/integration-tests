@@ -1,8 +1,7 @@
 {
   "extends": [
     "tslint:latest",
-    "tslint-config-prettier",
-    "tslint-plugin-prettier"
+    "tslint-config-prettier"
   ],
   "rulesDirectory": [
     "tslint-no-focused-test"
@@ -31,5 +30,5 @@
     "exclude": [
       "**/node_modules/**/*"
     ]
-  } 
+  }
 }
