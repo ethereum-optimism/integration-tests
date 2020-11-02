@@ -24,6 +24,7 @@ import assert = require('assert')
 describe('Transaction Ingestion', () => {
   let l1Provider: JsonRpcProvider
   let l1Signer: Wallet
+  let l2Signer
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
 
@@ -43,6 +44,7 @@ describe('Transaction Ingestion', () => {
       })
     )
     l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
+    l2Signer = await l2Provider.getSigner()
 
     const addressResolverAddress = add0x(Config.AddressResolverAddress())
     const AddressResolverFactory = getContractFactory('Lib_AddressManager')
@@ -59,18 +61,20 @@ describe('Transaction Ingestion', () => {
     canonicalTransactionChain = CanonicalTransactionChainFactory.connect(
       l1Signer
     ).attach(ctcAddress)
-
-    l2Provider.on('pending', (tx) => {
-      console.log('PENDING TX')
-      console.log(tx)
-    })
   })
 
+  // The transactions are enqueue'd with a `to` address of i.repeat(40)
+  // meaning that the `to` value is different each iteration in a deterministic
+  // way. They need to be inserted into the L2 chain in an ascending order.
   it('should enqueue some transactions', async () => {
     const receipts = []
 
+    // Keep track of the L2 tip before submitting any transactions so that
+    // the subsequent transactions can be queried for in the next test
     pre = await l2Provider.getBlock('latest')
 
+    // Enqueue some transactions by building the calldata and then sending
+    // the transaction to Layer 1
     for (let i = 0; i < 5; i++) {
       const input = ['0x' + `${i}`.repeat(40), 500_000, `0x0${i}`]
       const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
@@ -92,22 +96,25 @@ describe('Transaction Ingestion', () => {
     }
   })
 
-  it('should wait and fetch blocks', async () => {
-    // wait until each tx from the previous test has
-    // been processed
+  // The batch submitter will notice that there are transactions
+  // that are in the queue and submit them. L2 will pick up the
+  // sequencer batch appended event and play the transactions.
+  it('should order transactions correctly', async () => {
+    // Wait until each tx from the previous test has
+    // been executed
     let tip;
     do {
       tip = await l2Provider.getBlock('latest')
-      console.log(`l2 height: ${tip.number}`)
       await sleep(5000)
     } while (tip.number !== pre.number + 5)
 
+    // Fetch blocks,
     for (let i = pre.number + 1; i < pre.number + 5; i++) {
       const block = await l2Provider.getBlock(i)
       const hash = block.transactions[0]
+      assert(typeof hash === 'string')
       const tx = await l2Provider.getTransaction(hash)
-      console.log(tx)
       assert.equal(tx.to, '0x' + `${i-1}`.repeat(40))
     }
-  }).timeout(10000000)
-}).timeout(1000000000)
+  }).timeout(100000)
+}).timeout(10000000)
