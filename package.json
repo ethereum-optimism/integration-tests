@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@eth-optimism/contracts": "^0.0.2-alpha.5",
+    "@ethersproject/providers": "^5.0.14",
     "bignumber.js": "^9.0.0",
     "chai-bignumber": "^3.0.0",
     "debug": "^4.2.0",
