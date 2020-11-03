@@ -96,7 +96,8 @@ describe('Transactions', () => {
 
   it('gas price should be 0', async () => {
     const price = await provider.getGasPrice()
-    ;(0).should.eq(price.toNumber())
+    const num = price.toNumber()
+    num.should.eq(0)
   })
 
   it('should estimate gas', async () => {

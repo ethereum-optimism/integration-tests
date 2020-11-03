@@ -20,10 +20,11 @@
     "no-unused-expression": false,
     "object-literal-sort-keys": false,
     "ordered-imports": false,
-    "prettier": true,
     "semicolon": false,
     "variable-name": false,
-    "no-focused-test": true
+    "no-focused-test": true,
+    "quotemark": [true, "single"],
+    "trailing-comma": "never"
   },
   "linterOptions": {
     "exclude": [
