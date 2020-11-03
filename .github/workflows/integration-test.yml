@@ -26,9 +26,11 @@ jobs:
               $HOME/optimism-integration \
               --recurse-submodules
           cd $HOME/optimism-integration
+          if [ -z $GITHUB_HEAD_REF ]; then
+              GITHUB_HEAD_REF=${GITHUB_REF##*/}
+          fi
           ./docker/build.sh -s integration-tests -b $GITHUB_HEAD_REF
           ./docker/build.sh -s go-ethereum
-          ./docker/build.sh -s hardhat
           ./docker/build.sh -s deployer
 
       - name: Test
