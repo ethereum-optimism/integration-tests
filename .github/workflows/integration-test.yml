@@ -30,7 +30,6 @@ jobs:
               GITHUB_HEAD_REF=${GITHUB_REF##*/}
           fi
           ./docker/build.sh -s integration-tests -b $GITHUB_HEAD_REF
-          ./docker/build.sh -s deployer
 
       - name: Test
         run: |
