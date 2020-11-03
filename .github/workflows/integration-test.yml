@@ -34,4 +34,4 @@ jobs:
       - name: Test
         run: |
           cd $HOME/optimism-integration
-          PKGS=integration-tests ./test.sh
+          PKGS=integration-tests INTEGRATION_TESTS_TAG=$GITHUB_HEAD_REF ./test.sh
