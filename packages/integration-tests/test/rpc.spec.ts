@@ -5,7 +5,6 @@
  */
 
 import { Config, etherbase } from '../../../common'
-import { JsonRpcServer } from '@eth-optimism/core-utils'
 import { Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
