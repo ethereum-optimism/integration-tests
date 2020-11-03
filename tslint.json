@@ -1,7 +1,6 @@
 {
   "extends": [
-    "tslint:latest",
-    "tslint-config-prettier"
+    "tslint:latest"
   ],
   "rulesDirectory": [
     "tslint-no-focused-test"
