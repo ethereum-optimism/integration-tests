@@ -114,7 +114,7 @@ describe('Transaction Ingestion', () => {
       const hash = block.transactions[0]
       assert(typeof hash === 'string')
       const tx = await l2Provider.getTransaction(hash)
-      assert.equal(tx.to, '0x' + `${i-1}`.repeat(40))
+      assert.equal(tx.to, '0x' + `${i - 1}`.repeat(40))
     }
   }).timeout(100000)
 }).timeout(10000000)
