@@ -9,6 +9,8 @@ import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { deployContract } from 'ethereum-waffle'
+import chai = require('chai')
+const expect = chai.expect
 
 const ERC20 = require('../build/ERC20.json');
 
@@ -29,24 +31,30 @@ describe.only('Queue Origin Sequencer Transactions', () => {
     provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
   })
 
+  const initialSupply = 1000
   before(async () => {
     signer = await provider.getSigner()
-    token = await deployContract(signer, ERC20, [1000, 'Foo', 8, 'FOO'])
+    token = await (await deployContract(signer, ERC20, [initialSupply, 'Foo', 8, 'FOO'])).connect(signer)
   })
 
   it('should send a transaction', async () => {
+    console.log('We did a test yayyayay')
     const chainId = await signer.getChainId()
-    const address = await signer.getAddress()
-    const nonce = await provider.getTransactionCount(address)
+    console.log('TRANSFERING CONTRACT')
+    const balanceBefore = (await token.balanceOf(await signer.getAddress())).toNumber()
+    const friendAddress = '0x' + '11'.repeat(20)
+    const amountToSend = 10
+    const res = await token.transfer(friendAddress, amountToSend)
+    const balanceAfter = (await token.balanceOf(await signer.getAddress())).toNumber()
+    const friendBalance = (await token.balanceOf(friendAddress)).toNumber()
+    // Verify the transfer was correctly executed
+    expect(balanceBefore).to.equal(initialSupply)
+    expect(balanceAfter).to.equal(initialSupply - amountToSend)
+    expect(friendBalance).to.equal(amountToSend)
 
-    const result = await token.transfer(etherbase, 100000, {
-      nonce,
-      gasLimit: 41004,
-      gasPrice: 0,
-    })
-
-    console.log(result)
-    const receipt = await result.wait()
-    console.log(receipt)
+    // Now verify that the batch submitter works!
+    // TODO: Make this actually check for events instead of just waiting.
+    // console.log('Submitted tx!!! NOW WE ARE WAITING\n~~~~~~~~~~~~~~~~~~~\n~~~~~~~~~~~~~~~~~~~~~\n~~~~~~~~~~~~~~~~~')
+    // await new Promise(r => setTimeout(r, 100000));
   })
 })
