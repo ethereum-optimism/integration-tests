@@ -11,6 +11,7 @@ import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
 import { verifyMessage } from '@ethersproject/wallet'
 import { parse } from '@ethersproject/transactions'
 import { SignatureLike, joinSignature } from '@ethersproject/bytes'
+import assert = require('assert')
 
 describe('Transactions', () => {
   let provider
@@ -119,15 +120,20 @@ describe('Transactions', () => {
       estimates.push(estimate)
     }
 
+    // Pull in the env var that configures the target
+    // gas limit in l2 geth
+    const targetGasLimit = Config.TargetGasLimit()
+
     for (const estimate of estimates) {
-      estimate.toNumber().should.eq(7999999)
+      estimate.toNumber().should.eq(targetGasLimit - 1)
     }
   })
 
   it('should get correct chainid', async () => {
     const chainId = await provider.send('eth_chainId', [])
-    chainId.should.eq('0x1a4')
-    parseInt(chainId, 16).should.eq(420)
+    const expected = Config.ChainID()
+    chainId.should.eq('0x' + expected.toString(16))
+    parseInt(chainId, 16).should.eq(expected)
   })
 
   it('should get transaction (l2 metadata)', async () => {
@@ -141,10 +147,32 @@ describe('Transactions', () => {
 
     const signer = provider.getSigner()
     const result = await signer.sendTransaction(tx)
-
     const txn = await provider.getTransaction(result.hash)
 
     txn.txType.should.be.a('string')
     txn.queueOrigin.should.be.a('string')
+  })
+
+  // This test depends on previous transactions being mined
+  it('should get block with transactions', async () => {
+      const block = await provider.getBlockWithTransactions('latest')
+      assert(block.number !== 0)
+      // ethers JsonRpcProvider does not return the state root
+      // but the OptimismProvider does.
+      assert(typeof block.stateRoot === 'string')
+      // There must be a single transaction
+      assert(block.transactions.length === 1)
+      const tx = block.transactions[0]
+      // The previous test sends a transaction directly to L2 so
+      // the l1BlockNumber is null
+      assert(tx.l1BlockNumber === null)
+      // The `OptimismProvider` creates EthSign transactions
+      assert(tx.txType === 'EthSign')
+      // The transaction was sent directly to the sequencer so the
+      // queue origin is sequencer
+      assert(tx.queueOrigin === 'sequencer')
+      // The queue origin is the sequencer, not L1, so there is
+      // no L1TxOrigin
+      assert(tx.l1TxOrigin === null)
   })
 })
