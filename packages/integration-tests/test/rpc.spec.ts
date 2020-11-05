@@ -13,6 +13,8 @@ import { verifyMessage } from '@ethersproject/wallet'
 import { parse } from '@ethersproject/transactions'
 import { SignatureLike, joinSignature } from '@ethersproject/bytes'
 
+const DUMMY_ADDRESS = '0x' + '1234'.repeat(10)
+
 describe('Transactions', () => {
   let provider
 
@@ -34,9 +36,9 @@ describe('Transactions', () => {
     const nonce = await provider.getTransactionCount(address)
 
     const tx = {
-      to: etherbase,
+      to: DUMMY_ADDRESS,
       nonce,
-      gasLimit: 21004,
+      gasLimit: 4000000,
       gasPrice: 0,
       data: '0x',
       value: 0,
@@ -73,9 +75,9 @@ describe('Transactions', () => {
     const nonce = await provider.getTransactionCount(address)
 
     const tx = {
-      to: etherbase,
+      to: DUMMY_ADDRESS,
       nonce,
-      gasLimit: 21004,
+      gasLimit: 4000000,
       gasPrice: 0,
       data: '0x',
       value: 0,
@@ -102,8 +104,8 @@ describe('Transactions', () => {
 
   it('should estimate gas', async () => {
     const template = {
-      to: etherbase,
-      gasLimit: 21004,
+      to: DUMMY_ADDRESS,
+      gasLimit: 4000000,
       gasPrice: 0,
       value: 0,
       data: '',
@@ -133,8 +135,8 @@ describe('Transactions', () => {
 
   it('should get transaction (l2 metadata)', async () => {
     const tx = {
-      to: etherbase,
-      gasLimit: 21004,
+      to: DUMMY_ADDRESS,
+      gasLimit: 4000000,
       gasPrice: 0,
       data: '0x',
       value: 0,
