@@ -60,6 +60,16 @@ export class Config {
   public static DeployerPrivateKey(): string {
     return process.env.DEPLOYER_PRIVATE_KEY
   }
+
+  public static TargetGasLimit(): number {
+    const targetGasLimit = process.env.TARGET_GAS_LIMIT || '8000000'
+    return parseInt(targetGasLimit, 10)
+  }
+
+  public static ChainID(): number {
+    const chainid = process.env.CHAIN_ID || '420'
+    return parseInt(chainid, 10)
+  }
 }
 
 export const sleep = (m) => new Promise((r) => setTimeout(r, m))

@@ -66,9 +66,10 @@ describe('Transaction Ingestion', () => {
   // The transactions are enqueue'd with a `to` address of i.repeat(40)
   // meaning that the `to` value is different each iteration in a deterministic
   // way. They need to be inserted into the L2 chain in an ascending order.
+  // Keep track of the receipts so that the blockNumber can be compared
+  // against the `L1BlockNumber` on the tx objects.
+  const receipts = []
   it('should enqueue some transactions', async () => {
-    const receipts = []
-
     // Keep track of the L2 tip before submitting any transactions so that
     // the subsequent transactions can be queried for in the next test
     pre = await l2Provider.getBlock('latest')
@@ -76,7 +77,7 @@ describe('Transaction Ingestion', () => {
     // Enqueue some transactions by building the calldata and then sending
     // the transaction to Layer 1
     for (let i = 0; i < 5; i++) {
-      const input = ['0x' + `${i}`.repeat(40), 500_000, `0x0${i}`]
+      const input = ['0x' + `${i + 1}`.repeat(40), 500_000, `0x0${i}`]
       const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
         'enqueue',
         input
@@ -108,13 +109,33 @@ describe('Transaction Ingestion', () => {
       await sleep(5000)
     } while (tip.number !== pre.number + 5)
 
-    // Fetch blocks,
+    const from = await l1Signer.getAddress()
+
+    // Keep track of an index into the receipts list and
+    // increment it for each block fetched.
+    let receiptIndex = 0
+
+    // Fetch blocks
     for (let i = pre.number + 1; i < pre.number + 5; i++) {
       const block = await l2Provider.getBlock(i)
       const hash = block.transactions[0]
       assert(typeof hash === 'string')
-      const tx = await l2Provider.getTransaction(hash)
-      assert.equal(tx.to, '0x' + `${i - 1}`.repeat(40))
+      // Use as any hack because additional properties are
+      // added to the transaction response
+      const tx = await l2Provider.getTransaction(hash) as any
+      // The `to` addresses are defined in the previous test and
+      // increment sequentially.
+      assert.equal(tx.to, '0x' + `${i}`.repeat(40))
+      // The transaction type is EIP155
+      assert.equal(tx.txType, 'EIP155')
+      // The queue origin is Layer 1
+      assert.equal(tx.queueOrigin, 'l1')
+      // the L1TxOrigin is equal to the Layer one from
+      assert.equal(tx.l1TxOrigin, from.toLowerCase())
+      assert.equal(typeof tx.l1BlockNumber, 'number')
+      // Get the receipt and increment the recept index
+      const receipt = receipts[receiptIndex++]
+      assert.equal(tx.l1BlockNumber, receipt.blockNumber)
     }
   }).timeout(100000)
-}).timeout(10000000)
+})
