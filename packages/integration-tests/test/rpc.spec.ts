@@ -48,8 +48,9 @@ describe('Transactions', () => {
     const hex = await signer.signTransaction(tx)
 
     const txid = await provider.send('eth_sendRawEthSignTransaction', [hex])
-    const transaction = await provider.getTransaction(txid)
 
+    const transaction = await provider.getTransaction(txid)
+    assert(transaction !== null)
     // The correct signature hashing was performed
     address.should.eq(transaction.from)
 
