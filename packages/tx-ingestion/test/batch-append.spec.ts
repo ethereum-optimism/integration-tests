@@ -76,11 +76,13 @@ describe('Transaction Ingestion', () => {
     // Enqueue some transactions by building the calldata and then sending
     // the transaction to Layer 1
     for (let i = 0; i < 5; i++) {
-      const input = ['0x' + `${i}`.repeat(40), 500_000, `0x0${i}`]
+      const input = ['0x' + `${i+1}`.repeat(40), 4_000_000, `0x0${i+1}`]
       const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
         'enqueue',
         input
       )
+
+      console.log('L1 Signer IS:', l1Signer.address)
 
       const txResponse = await l1Signer.sendTransaction({
         data: calldata,
@@ -114,7 +116,7 @@ describe('Transaction Ingestion', () => {
       const hash = block.transactions[0]
       assert(typeof hash === 'string')
       const tx = await l2Provider.getTransaction(hash)
-      assert.equal(tx.to, '0x' + `${i - 1}`.repeat(40))
+      assert.equal(tx.to, '0x' + `${i}`.repeat(40))
     }
   }).timeout(100000)
 }).timeout(10000000)
