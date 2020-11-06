@@ -77,7 +77,7 @@ describe('Transaction Ingestion', () => {
     // Enqueue some transactions by building the calldata and then sending
     // the transaction to Layer 1
     for (let i = 0; i < 5; i++) {
-      const input = ['0x' + `${i}`.repeat(40), 500_000, `0x0${i}`]
+      const input = ['0x' + `${i + 1}`.repeat(40), 500_000, `0x0${i}`]
       const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
         'enqueue',
         input
@@ -125,7 +125,7 @@ describe('Transaction Ingestion', () => {
       const tx = await l2Provider.getTransaction(hash) as any
       // The `to` addresses are defined in the previous test and
       // increment sequentially.
-      assert.equal(tx.to, '0x' + `${i - 1}`.repeat(40))
+      assert.equal(tx.to, '0x' + `${i}`.repeat(40))
       // The transaction type is EIP155
       assert.equal(tx.txType, 'EIP155')
       // The queue origin is Layer 1
