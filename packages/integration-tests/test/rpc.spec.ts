@@ -48,6 +48,7 @@ describe('Transactions', () => {
     const hex = await signer.signTransaction(tx)
 
     const txid = await provider.send('eth_sendRawEthSignTransaction', [hex])
+    await provider.waitForTransaction(txid)
 
     const transaction = await provider.getTransaction(txid)
     assert(transaction !== null)
