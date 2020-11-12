@@ -137,5 +137,5 @@ describe('Transaction Ingestion', () => {
       const receipt = receipts[receiptIndex++]
       assert.equal(tx.l1BlockNumber, receipt.blockNumber)
     }
-  }).timeout(100000)
+  }).timeout(120000)
 })
