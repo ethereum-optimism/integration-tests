@@ -87,6 +87,7 @@ describe('Transactions', () => {
     }
 
     const result = await signer.sendTransaction(tx)
+    await result.wait()
 
     // "from" is calculated client side here, so
     // make sure that it is computed correctly.
@@ -151,6 +152,7 @@ describe('Transactions', () => {
 
     const signer = provider.getSigner()
     const result = await signer.sendTransaction(tx)
+    await result.wait()
     const txn = await provider.getTransaction(result.hash)
 
     txn.txType.should.be.a('string')
