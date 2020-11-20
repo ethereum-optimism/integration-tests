@@ -169,9 +169,9 @@ describe('Transactions', () => {
       // There must be a single transaction
       assert(block.transactions.length === 1)
       const tx = block.transactions[0]
-      // The previous test sends a transaction directly to L2 so
-      // the l1BlockNumber is null
-      assert(tx.l1BlockNumber === null)
+      // The l1BlockNumber is 0 because there has not been a
+      // L1 to L2 transaction yet
+      assert(tx.l1BlockNumber === 0)
       // The `OptimismProvider` creates EthSign transactions
       assert(tx.txType === 'EthSign')
       // The transaction was sent directly to the sequencer so the
