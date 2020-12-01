@@ -5,6 +5,12 @@ import { JsonRpcProvider, Provider } from '@ethersproject/providers'
 chai.use(chaiAsPromised)
 const should = chai.should()
 
+if (process.env.NODE_ENV == 'local') {
+  // Load up env variables
+  var envPath = __dirname + "/.env"
+  require('dotenv').config({ path: envPath })
+}
+
 // Commonly used test mnemonic
 export const mnemonic = process.env.MNEMONIC ||
   'abandon abandon abandon abandon abandon abandon ' +
