@@ -2,7 +2,7 @@ import { Config, sleep } from '../../../common'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import assert = require('assert')
-import fs = require('fs')
+import * as fs from 'fs';
 
 import {
   Contract, ContractFactory, providers, Wallet,
@@ -17,11 +17,11 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const messengerJSON = JSON.parse(fs.readFileSync('contracts/build/iOVM_BaseCrossDomainMessenger.json'))
-const l2MessengerJSON = JSON.parse(fs.readFileSync('contracts/build/OVM_L2CrossDomainMessenger.json'))
+const messengerJSON = JSON.parse(fs.readFileSync('contracts/build/iOVM_BaseCrossDomainMessenger.json').toString())
+const l2MessengerJSON = JSON.parse(fs.readFileSync('contracts/build/OVM_L2CrossDomainMessenger.json').toString())
 
 const deploySimpleStorage = async () => {
-  const SimpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json'))
+  const SimpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json').toString())
   const SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l2Wallet)
   return SimpleStorageFactory.deploy()
 }
