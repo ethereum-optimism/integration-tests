@@ -1,15 +1,12 @@
 import { Config, sleep } from '../../../common'
-import { Web3Provider } from '@ethersproject/providers'
+import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import assert = require('assert')
+import fs = require('fs')
 
-const {
-  Contract,
-  ContractFactory,
-  providers: { JsonRpcProvider },
-  Wallet,
-} = require('ethers');
-const fs = require('fs')
+import {
+  Contract, ContractFactory, providers, Wallet,
+} from 'ethers';
 
 let SimpleStorage
 const L1_USER_PRIVATE_KEY = Config.L1UserPrivateKey()
@@ -42,14 +39,12 @@ const deposit = async (amount, value) => {
   )
   await l1Provider.waitForTransaction(l1ToL2Tx.hash)
   const count = (await SimpleStorage.totalCount()).toString()
-  while (count == (await SimpleStorage.totalCount()).toString()) {
+  while (count === (await SimpleStorage.totalCount()).toString()) {
     await sleep(5000)
   }
 }
 
 describe('Messages', async () => {
-  let provider
-
   before(async () => {
     const web3 = new Web3Provider(
       ganache.provider({
