@@ -15,10 +15,10 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 let SimpleStorage
 let L2Messenger
-const L1_USER_PRIVATE_KEY = process.env.L1_USER_PRIVATE_KEY
-const L2_USER_PRIVATE_KEY = process.env.L2_USER_PRIVATE_KEY
-const goerliURL = process.env.L1_URL
-const optimismURL = process.env.L2_URL
+const L1_USER_PRIVATE_KEY = Config.L1UserPrivateKey()
+const L2_USER_PRIVATE_KEY = Config.L2UserPrivateKey()
+const goerliURL = Config.L1NodeUrlWithPort()
+const optimismURL = Config.L2NodeUrlWithPort()
 const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
@@ -30,12 +30,11 @@ const deploySimpleStorage = async () => {
   const SimpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json'))
   const SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l2Wallet)
   SimpleStorage = await SimpleStorageFactory.deploy()
-  console.log('Deployed SimpleStorage to', SimpleStorage.address)
 }
 
-const deposit = async (amount) => {
-  const L1Messenger = new Contract(process.env.L1_MESSENGER_ADDRESS, messengerJSON.abi, l1Wallet)
-  L2Messenger = new Contract(process.env.L2_MESSENGER_ADDRESS, l2MessengerJSON.abi, l2Wallet)
+const deposit = async (amount, ...args) => {
+  const L1Messenger = new Contract(Config.L1MessengerAddress(), messengerJSON.abi, l1Wallet)
+  L2Messenger = new Contract(Config.L2MessengerAddress(), l2MessengerJSON.abi, l2Wallet)
 
   const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [`0x${'42'.repeat(32)}`])
   const l1ToL2Tx = await L1Messenger.sendMessage(
@@ -45,10 +44,8 @@ const deposit = async (amount) => {
     { gasLimit: 7000000 }
   )
   await l1Provider.waitForTransaction(l1ToL2Tx.hash)
-  console.log('L1->L2 setValue tx complete: https://goerli.etherscan.io/tx/' + l1ToL2Tx.hash)
   const count = (await SimpleStorage.totalCount()).toString()
   while (count == (await SimpleStorage.totalCount()).toString()) {
-    console.log('sleeping...')
     await sleep(5000)
   }
 }

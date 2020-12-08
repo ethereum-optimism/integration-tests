@@ -78,6 +78,22 @@ export class Config {
     const chainid = process.env.CHAIN_ID || '420'
     return parseInt(chainid, 10)
   }
+
+  public static L1UserPrivateKey(): string {
+    return process.env.L1_USER_PRIVATE_KEY
+  }
+
+  public static L2UserPrivateKey(): string {
+    return process.env.L2_USER_PRIVATE_KEY
+  }
+
+  public static L1MessengerAddress(): string {
+    return process.env.L1_MESSENGER_ADDRESS
+  }
+
+  public static L2MessengerAddress(): string {
+    return process.env.L2_MESSENGER_ADDRESS
+  }
 }
 
 export const sleep = (m) => new Promise((r) => setTimeout(r, m))

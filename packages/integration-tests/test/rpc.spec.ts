@@ -88,7 +88,7 @@ describe('Transactions', () => {
     const result = await signer.sendTransaction(tx)
     await result.wait()
 
-    // from is calculated client side here, so
+    // "from" is calculated client side here, so
     // make sure that it is computed correctly.
     result.from.should.eq(address)
 
