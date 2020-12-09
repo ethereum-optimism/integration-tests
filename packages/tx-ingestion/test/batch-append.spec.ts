@@ -100,7 +100,7 @@ describe('Transaction Ingestion', () => {
   // The batch submitter will notice that there are transactions
   // that are in the queue and submit them. L2 will pick up the
   // sequencer batch appended event and play the transactions.
-  it('should order transactions correctly', async () => {
+  it.skip('should order transactions correctly', async () => {
     // Wait until each tx from the previous test has
     // been executed
     let tip;
