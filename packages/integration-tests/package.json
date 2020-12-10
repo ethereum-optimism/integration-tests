@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "all": "yarn clean && yarn build && yarn test && yarn fix && yarn lint",
-    "build": "tsc -p .",
+    "build": "mkdir -p build && waffle waffle-config.json && tsc -p .",
     "clean": "rimraf build/",
     "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
     "lint": "tslint --format stylish --project .",
@@ -30,6 +30,7 @@
     "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
   },
   "dependencies": {
+    "@eth-optimism/contracts": "0.0.2-alpha.13",
     "@eth-optimism/core-db": "^0.0.1-alpha.30",
     "@eth-optimism/core-utils": "^0.0.1-alpha.30",
     "@eth-optimism/ovm-toolchain": "^0.0.1-alpha.5",
