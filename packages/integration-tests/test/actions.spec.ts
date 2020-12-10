@@ -3,6 +3,7 @@ import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import assert = require('assert')
+import axios from 'axios'
 import * as fs from 'fs';
 
 import {
@@ -10,27 +11,37 @@ import {
 } from 'ethers';
 
 let SimpleStorage
-const L1_USER_PRIVATE_KEY = Config.L1UserPrivateKey()
-const L2_USER_PRIVATE_KEY = Config.L2UserPrivateKey()
+const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
+const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const goerliURL = Config.L1NodeUrlWithPort()
 const optimismURL = Config.L2NodeUrlWithPort()
 const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const messengerJSON = JSON.parse(fs.readFileSync('contracts/build/iOVM_BaseCrossDomainMessenger.json').toString())
-const l2MessengerJSON = JSON.parse(fs.readFileSync('contracts/build/OVM_L2CrossDomainMessenger.json').toString())
+const messengerJSON = JSON.parse(fs.readFileSync(
+  'contracts/build/iOVM_BaseCrossDomainMessenger.json'
+).toString())
+const l2MessengerJSON = JSON.parse(fs.readFileSync(
+  'contracts/build/OVM_L2CrossDomainMessenger.json'
+).toString())
 
 let watcher
-const initWatcher = () => {
+let l1MessengerAddress
+let l2MessengerAddress
+const initWatcher = async () => {
+  const response = await axios.get(`${Config.DeployerUrl()}/addresses.json`)
+  const addresses = response.data
+  l1MessengerAddress = addresses['Proxy__OVM_L1CrossDomainMessenger']
+  l2MessengerAddress = '0x4200000000000000000000000000000000000007' // TODO: pull from deployer once fixed
   return new Watcher({
     l1: {
       provider: l1Provider,
-      messengerAddress: process.env.L1_MESSENGER_ADDRESS
+      messengerAddress: l1MessengerAddress
     },
     l2: {
       provider: l2Provider,
-      messengerAddress: process.env.L2_MESSENGER_ADDRESS
+      messengerAddress: l2MessengerAddress
     }
   })
 }
@@ -44,8 +55,8 @@ const deploySimpleStorage = async () => {
 }
 
 const deposit = async (amount, value) => {
-  const L1Messenger = new Contract(Config.L1MessengerAddress(), messengerJSON.abi, l1Wallet)
-  const L2Messenger = new Contract(Config.L2MessengerAddress(), l2MessengerJSON.abi, l2Wallet)
+  const L1Messenger = new Contract(l1MessengerAddress, messengerJSON.abi, l1Wallet)
+  const L2Messenger = new Contract(l2MessengerAddress, l2MessengerJSON.abi, l2Wallet)
   const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l1ToL2Tx = await L1Messenger.sendMessage(
     SimpleStorage.address,
