@@ -105,7 +105,7 @@ describe('Transactions', () => {
     num.should.eq(0)
   })
 
-  it('should estimate gas', async () => {
+  it.skip('should estimate gas', async () => {
     const template = {
       to: DUMMY_ADDRESS,
       gasLimit: 4000000,
