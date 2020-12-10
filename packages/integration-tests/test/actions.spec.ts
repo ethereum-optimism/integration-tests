@@ -1,6 +1,7 @@
 import { Config, sleep } from '../../../common'
-import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
+import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import assert = require('assert')
 import * as fs from 'fs';
 
@@ -20,16 +21,31 @@ const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
 const messengerJSON = JSON.parse(fs.readFileSync('contracts/build/iOVM_BaseCrossDomainMessenger.json').toString())
 const l2MessengerJSON = JSON.parse(fs.readFileSync('contracts/build/OVM_L2CrossDomainMessenger.json').toString())
 
+let watcher
+const initWatcher = () => {
+  return new Watcher({
+    l1: {
+      provider: l1Provider,
+      messengerAddress: process.env.L1_MESSENGER_ADDRESS
+    },
+    l2: {
+      provider: l2Provider,
+      messengerAddress: process.env.L2_MESSENGER_ADDRESS
+    }
+  })
+}
+
 const deploySimpleStorage = async () => {
   const SimpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json').toString())
   const SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l2Wallet)
+  const dummy = await SimpleStorageFactory.deploy()
+  await dummy.deployTransaction.wait()
   return SimpleStorageFactory.deploy()
 }
 
 const deposit = async (amount, value) => {
   const L1Messenger = new Contract(Config.L1MessengerAddress(), messengerJSON.abi, l1Wallet)
   const L2Messenger = new Contract(Config.L2MessengerAddress(), l2MessengerJSON.abi, l2Wallet)
-
   const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l1ToL2Tx = await L1Messenger.sendMessage(
     SimpleStorage.address,
@@ -37,11 +53,9 @@ const deposit = async (amount, value) => {
     5000000,
     { gasLimit: 7000000 }
   )
-  await l1Provider.waitForTransaction(l1ToL2Tx.hash)
-  const count = (await SimpleStorage.totalCount()).toString()
-  while (count === (await SimpleStorage.totalCount()).toString()) {
-    await sleep(5000)
-  }
+  await l1ToL2Tx.wait()
+  const [msgHash] = await watcher.getMessageHashesFromL1Tx(l1ToL2Tx.hash)
+  const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
 
 describe('Messages', async () => {
@@ -51,6 +65,10 @@ describe('Messages', async () => {
         mnemonic: Config.Mnemonic(),
       })
     )
+  })
+
+  it('should initialize the watcher', async () => {
+    watcher = await initWatcher()
   })
 
   it('should deploy the simple storage contract', async () => {
