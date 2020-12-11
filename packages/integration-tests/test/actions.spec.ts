@@ -1,15 +1,17 @@
 import * as fs from 'fs';
-import { Config, sleep } from '../../../common'
+import { Config, sleep, etherbase } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { OptimismProvider } from '@eth-optimism/provider'
 import assert = require('assert')
 
 import {
   Contract, ContractFactory, providers, Wallet,
 } from 'ethers';
 
+let ERC20
 let SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
@@ -51,6 +53,14 @@ const deploySimpleStorage = async () => {
   return SimpleStorageFactory.deploy()
 }
 
+const deployERC20 = async () => {
+  const ERC20Json = JSON.parse(fs.readFileSync('contracts/build/ERC20.json').toString())
+  const ERC20Factory = new ContractFactory(ERC20Json.abi, ERC20Json.bytecode, l2Wallet)
+  const dummy = await ERC20Factory.deploy()
+  await dummy.deployTransaction.wait()
+  return ERC20Factory.deploy()
+}
+
 const deposit = async (amount, value) => {
   const L1Messenger = new Contract(l1MessengerAddress, l1MessengerJSON, l1Wallet)
   const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
@@ -65,13 +75,42 @@ const deposit = async (amount, value) => {
   const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
 
+const withdraw = async (value) => {
+  const L2Messenger = new Contract(l2MessengerAddress, l2MessengerJSON, l2Wallet)
+  const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l2ToL1Tx = await L2Messenger.sendMessage(
+    SimpleStorage.address,
+    calldata,
+    5000000,
+    { gasLimit: 7000000 }
+  )
+  await l2Provider.waitForTransaction(l2ToL1Tx.hash)
+  console.log('L2->L1 setValue tx complete: http://https://l2-explorer.surge.sh/tx/' + l2ToL1Tx.hash)
+  const count = (await SimpleStorage.totalCount()).toString()
+  while (true) {
+    console.log('simple storage msg.sender', await SimpleStorage.msgSender())
+    console.log('simple storage xDomainMessageSender', await SimpleStorage.l2ToL1Sender())
+    console.log('simple storage value', await SimpleStorage.value())
+    console.log('totalCount', (await SimpleStorage.totalCount()).toString())
+    console.log('sleeping 1 minute...')
+    await sleep(60000)
+  }
+}
+
 describe('Messages', async () => {
+  let optimismProvider
+  let provider: JsonRpcProvider
+  let token
+
   before(async () => {
     const web3 = new Web3Provider(
       ganache.provider({
         mnemonic: Config.Mnemonic(),
       })
     )
+
+    optimismProvider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
+    provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
   })
 
   it('should initialize the watcher', async () => {
@@ -80,6 +119,10 @@ describe('Messages', async () => {
 
   it('should deploy the simple storage contract', async () => {
     SimpleStorage = await deploySimpleStorage()
+  })
+
+  it('should deploy the erc20 contract', async () => {
+    ERC20 = await deployERC20()
   })
 
   it('should deposit from L1->L2', async () => {
