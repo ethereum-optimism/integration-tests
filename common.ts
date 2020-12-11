@@ -82,6 +82,16 @@ export class Config {
     const chainid = process.env.CHAIN_ID || '420'
     return parseInt(chainid, 10)
   }
+
+  public static L1MessengerAddress(): string {
+    return process.env.L1_MESSENGER_ADDRESS
+  }
+
+  // TODO: pull from deployer once fixed
+  // https://github.com/ethereum-optimism/roadmap/issues/311
+  public static L2MessengerAddress(): string {
+    return process.env.L2_MESSENGER_ADDRESS || '0x4200000000000000000000000000000000000007'
+  }
 }
 
 export const sleep = (m) => new Promise((r) => setTimeout(r, m))

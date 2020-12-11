@@ -12,6 +12,8 @@ import {
 } from 'ethers';
 
 let SimpleStorage
+const l1MessengerAddress = Config.L1MessengerAddress()
+const l2MessengerAddress = Config.L2MessengerAddress()
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const goerliURL = Config.L1NodeUrlWithPort()
@@ -24,13 +26,7 @@ const messengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
 const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
 
 let watcher
-let l1MessengerAddress
-let l2MessengerAddress
 const initWatcher = async () => {
-  const response = await axios.get(`${Config.DeployerUrl()}/addresses.json`)
-  const addresses = response.data
-  l1MessengerAddress = addresses['Proxy__OVM_L1CrossDomainMessenger']
-  l2MessengerAddress = '0x4200000000000000000000000000000000000007' // TODO: pull from deployer once fixed
   return new Watcher({
     l1: {
       provider: l1Provider,
