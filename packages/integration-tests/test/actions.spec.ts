@@ -1,4 +1,3 @@
-import axios from 'axios'
 import * as fs from 'fs';
 import { Config, sleep } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
