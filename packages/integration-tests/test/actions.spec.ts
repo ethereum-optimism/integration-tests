@@ -1,10 +1,11 @@
+import axios from 'axios'
+import * as fs from 'fs';
 import { Config, sleep } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
+import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import assert = require('assert')
-import axios from 'axios'
-import * as fs from 'fs';
 
 import {
   Contract, ContractFactory, providers, Wallet,
@@ -19,12 +20,8 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const messengerJSON = JSON.parse(fs.readFileSync(
-  'contracts/build/iOVM_BaseCrossDomainMessenger.json'
-).toString())
-const l2MessengerJSON = JSON.parse(fs.readFileSync(
-  'contracts/build/OVM_L2CrossDomainMessenger.json'
-).toString())
+const messengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
+const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
 
 let watcher
 let l1MessengerAddress
@@ -55,8 +52,7 @@ const deploySimpleStorage = async () => {
 }
 
 const deposit = async (amount, value) => {
-  const L1Messenger = new Contract(l1MessengerAddress, messengerJSON.abi, l1Wallet)
-  const L2Messenger = new Contract(l2MessengerAddress, l2MessengerJSON.abi, l2Wallet)
+  const L1Messenger = new Contract(l1MessengerAddress, messengerJSON, l1Wallet)
   const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l1ToL2Tx = await L1Messenger.sendMessage(
     SimpleStorage.address,
