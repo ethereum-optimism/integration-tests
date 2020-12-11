@@ -7,8 +7,8 @@ import { JsonRpcProvider, Provider } from '@ethersproject/providers'
 chai.use(chaiAsPromised)
 const should = chai.should()
 
+// Load up env variables if running locally
 if (process.env.NODE_ENV === 'local') {
-  // Load up env variables
   const envPath = path.join(__dirname, '/.env');
   dotenv.config({ path: envPath })
 }
@@ -81,16 +81,6 @@ export class Config {
   public static ChainID(): number {
     const chainid = process.env.CHAIN_ID || '420'
     return parseInt(chainid, 10)
-  }
-
-  public static L1MessengerAddress(): string {
-    return process.env.L1_MESSENGER_ADDRESS
-  }
-
-  // TODO: pull from deployer once fixed
-  // https://github.com/ethereum-optimism/roadmap/issues/311
-  public static L2MessengerAddress(): string {
-    return process.env.L2_MESSENGER_ADDRESS || '0x4200000000000000000000000000000000000007'
   }
 }
 

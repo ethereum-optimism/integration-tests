@@ -12,8 +12,8 @@ import {
 } from 'ethers';
 
 let SimpleStorage
-const l1MessengerAddress = Config.L1MessengerAddress()
-const l2MessengerAddress = Config.L2MessengerAddress()
+let l1MessengerAddress
+let l2MessengerAddress
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const goerliURL = Config.L1NodeUrlWithPort()
@@ -22,11 +22,16 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const messengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
+const l1MessengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
 const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
+const addressManagerAddress = Config.AddressResolverAddress()
+const addressManagerInterface = getContractInterface('Lib_AddressManager')
+const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
 
 let watcher
 const initWatcher = async () => {
+  l1MessengerAddress = await AddressManager.getAddress('Proxy__OVM_L1CrossDomainMessenger')
+  l2MessengerAddress = await AddressManager.getAddress('OVM_L2CrossDomainMessenger')
   return new Watcher({
     l1: {
       provider: l1Provider,
@@ -48,7 +53,7 @@ const deploySimpleStorage = async () => {
 }
 
 const deposit = async (amount, value) => {
-  const L1Messenger = new Contract(l1MessengerAddress, messengerJSON, l1Wallet)
+  const L1Messenger = new Contract(l1MessengerAddress, l1MessengerJSON, l1Wallet)
   const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l1ToL2Tx = await L1Messenger.sendMessage(
     SimpleStorage.address,
@@ -86,9 +91,9 @@ describe('Messages', async () => {
     const storageVal = await SimpleStorage.value()
     const count = await SimpleStorage.totalCount()
 
-    msgSender.should.be.eq('0x4200000000000000000000000000000000000007')
-    l1ToL2Sender.should.be.eq('0x023fFdC1530468eb8c8EEbC3e38380b5bc19Cc5d')
-    storageVal.should.be.eq(`0x${'42'.repeat(32)}`)
+    msgSender.should.be.eq(l2MessengerAddress)
+    l1ToL2Sender.should.be.eq(l1Wallet.address)
+    storageVal.should.be.eq(value)
     count.toNumber().should.be.eq(1)
   })
 })
