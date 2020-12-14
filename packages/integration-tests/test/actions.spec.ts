@@ -66,9 +66,6 @@ const deposit = async (amount, value) => {
 }
 
 describe('Messages', async () => {
-  before(async () => {
-
-  })
 
   it('should initialize the watcher', async () => {
     watcher = await initWatcher()
