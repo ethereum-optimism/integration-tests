@@ -3,7 +3,7 @@ import { Config, sleep } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import assert = require('assert')
 
 import {
@@ -67,11 +67,7 @@ const deposit = async (amount, value) => {
 
 describe('Messages', async () => {
   before(async () => {
-    const web3 = new Web3Provider(
-      ganache.provider({
-        mnemonic: Config.Mnemonic(),
-      })
-    )
+
   })
 
   it('should initialize the watcher', async () => {
