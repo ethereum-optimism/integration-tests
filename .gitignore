@@ -19,6 +19,8 @@
 *.test.tmp
 /**/package-lock.json
 
+/**/.env
+
 /**/*.log
 
 *.bytecode

@@ -1,9 +1,17 @@
+import * as path from 'path';
 import chai = require('chai')
+import dotenv = require('dotenv')
 import chaiAsPromised = require('chai-as-promised')
 import { JsonRpcProvider, Provider } from '@ethersproject/providers'
 
 chai.use(chaiAsPromised)
 const should = chai.should()
+
+// Load up env variables if running locally
+if (process.env.NODE_ENV === 'local') {
+  const envPath = path.join(__dirname, '/.env');
+  dotenv.config({ path: envPath })
+}
 
 // Commonly used test mnemonic
 export const mnemonic = process.env.MNEMONIC ||
@@ -55,6 +63,10 @@ export class Config {
 
   public static SequencerPrivateKey(): string {
     return process.env.SEQUENCER_PRIVATE_KEY
+  }
+
+  public static DeployerUrl(): string {
+    return process.env.DEPLOYER_URL || 'http://localhost:8080'
   }
 
   public static DeployerPrivateKey(): string {

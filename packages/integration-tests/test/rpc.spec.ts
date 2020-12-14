@@ -9,7 +9,7 @@ import { Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
 import { verifyMessage } from '@ethersproject/wallet'
-import { parse } from '@ethersproject/transactions'
+import { computeAddress, parse } from '@ethersproject/transactions'
 import { SignatureLike, joinSignature } from '@ethersproject/bytes'
 import assert = require('assert')
 
@@ -24,7 +24,6 @@ describe('Transactions', () => {
         mnemonic: Config.Mnemonic(),
       })
     )
-
     provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
   })
 
@@ -161,21 +160,21 @@ describe('Transactions', () => {
 
   // This test depends on previous transactions being mined
   it('should get block with transactions', async () => {
-      const block = await provider.getBlockWithTransactions('latest')
-      assert(block.number !== 0)
-      // ethers JsonRpcProvider does not return the state root
-      // but the OptimismProvider does.
-      assert(typeof block.stateRoot === 'string')
-      // There must be a single transaction
-      assert(block.transactions.length === 1)
-      const tx = block.transactions[0]
-      // The `OptimismProvider` creates EthSign transactions
-      assert(tx.txType === 'EthSign')
-      // The transaction was sent directly to the sequencer so the
-      // queue origin is sequencer
-      assert(tx.queueOrigin === 'sequencer')
-      // The queue origin is the sequencer, not L1, so there is
-      // no L1TxOrigin
-      assert(tx.l1TxOrigin === null)
+    const block = await provider.getBlockWithTransactions('latest')
+    assert(block.number !== 0)
+    // ethers JsonRpcProvider does not return the state root
+    // but the OptimismProvider does.
+    assert(typeof block.stateRoot === 'string')
+    // There must be a single transaction
+    assert(block.transactions.length === 1)
+    const tx = block.transactions[0]
+    // The `OptimismProvider` creates EthSign transactions
+    assert(tx.txType === 'EthSign')
+    // The transaction was sent directly to the sequencer so the
+    // queue origin is sequencer
+    assert(tx.queueOrigin === 'sequencer')
+    // The queue origin is the sequencer, not L1, so there is
+    // no L1TxOrigin
+    assert(tx.l1TxOrigin === null)
   })
 })

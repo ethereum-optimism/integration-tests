@@ -10,7 +10,7 @@ import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { deployContract } from 'ethereum-waffle'
 import assert = require('assert')
-import ERC20 = require('../build/ERC20.json');
+import ERC20 = require('../contracts/build/ERC20.json')
 
 // TODO(mark): Remove the skip of this test when
 // the verifier is enabled in geth
