@@ -14,7 +14,7 @@ import ERC20 = require('../contracts/build/ERC20.json')
 
 // TODO(mark): Remove the skip of this test when
 // the verifier is enabled in geth
-describe.skip('Queue Origin Sequencer Transactions', () => {
+describe('Queue Origin Sequencer Transactions', () => {
   let optimismProvider
   let provider: JsonRpcProvider
   let token
@@ -34,7 +34,6 @@ describe.skip('Queue Origin Sequencer Transactions', () => {
   const initalSupply = 1000
   before(async () => {
     const pre = await provider.getBlock('latest')
-
     signer = await provider.getSigner()
     token = await deployContract(signer, ERC20, [initalSupply, 'Foo', 8, 'FOO'])
 
