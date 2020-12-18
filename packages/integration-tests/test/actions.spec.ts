@@ -9,6 +9,8 @@ import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
+import simpleStorageJson = require('../contracts/build/SimpleStorage.json')
+import erc20Json = require('../contracts/build/ERC20.json')
 
 use(solidity)
 
@@ -33,6 +35,12 @@ const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
+const simpleStorageFactory = new ContractFactory(
+  simpleStorageJson.abi, simpleStorageJson.bytecode, l2Wallet
+)
+const ERC20Factory = new ContractFactory(
+  erc20Json.abi, erc20Json.bytecode, l2Wallet
+)
 
 let watcher
 const initWatcher = async () => {
@@ -48,21 +56,6 @@ const initWatcher = async () => {
       messengerAddress: l2MessengerAddress
     }
   })
-}
-
-const deploySimpleStorage = async () => {
-  const simpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json').toString())
-  const simpleStorageFactory = new ContractFactory(simpleStorageJson.abi, simpleStorageJson.bytecode, l2Wallet)
-  return simpleStorageFactory.deploy()
-}
-
-const deployERC20 = async (initialAmount, name, decimals, symbol) => {
-  const erc20Json = JSON.parse(fs.readFileSync('contracts/build/ERC20.json').toString())
-  const ERC20Factory = new ContractFactory(erc20Json.abi, erc20Json.bytecode, l2Wallet)
-  erc20 = await ERC20Factory.deploy(
-    initialAmount, name, decimals, symbol
-  )
-  return erc20
 }
 
 const deposit = async (amount, value) => {
@@ -100,8 +93,6 @@ describe('SimpleStorage', async () => {
         mnemonic: Config.Mnemonic(),
       })
     )
-    // TODO: Figure out if Optimism Provider can be used at the same time as JsonRpcProvider
-    // let optimismProvider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
   })
 
   it('should initialize the watcher', async () => {
@@ -109,7 +100,8 @@ describe('SimpleStorage', async () => {
   })
 
   it('should deploy the simple storage contract', async () => {
-    simpleStorage = await deploySimpleStorage()
+    simpleStorage = await simpleStorageFactory.deploy()
+    await simpleStorage.deployTransaction.wait()
   })
 
   it('should deposit from L1->L2', async () => {
@@ -150,7 +142,9 @@ describe('ERC20', async () => {
   const alice = new Wallet(etherbase, l2Provider)
 
   it('should deploy the erc20 contract', async () => {
-    erc20 = await deployERC20(INITIAL_AMOUNT, NAME, DECIMALS, SYMBOL)
+    erc20 = await ERC20Factory.deploy(
+      INITIAL_AMOUNT, NAME, DECIMALS, SYMBOL
+    )
   })
 
   it('should set the total supply', async () => {
@@ -169,8 +163,8 @@ describe('ERC20', async () => {
   })
 
   it('should get the token symbol', async () => {
-    const decimals = await erc20.symbol()
-    expect(decimals).to.equal(SYMBOL)
+    const symbol = await erc20.symbol()
+    expect(symbol).to.equal(SYMBOL)
   })
 
   it('should assign initial balance', async () => {
@@ -181,6 +175,11 @@ describe('ERC20', async () => {
   it('should transfer amount to destination account', async () => {
     const transfer = await erc20.transfer(alice.address, 100)
     const receipt = await transfer.wait()
+    const transferLog = receipt.events.find((element) => element.event.match('Transfer'));
+    assert.strictEqual(transferLog.args._from, l1Wallet.address);
+    // TODO: Not sure where '0x4200000000000000000000000000000000000005' address is coming from
+    assert.strictEqual(transferLog.args._to, '0x4200000000000000000000000000000000000005');
+    assert.strictEqual(transferLog.args._value.toString(), '0');
     const newBalance = await erc20.balanceOf(alice.address)
     expect(newBalance.toNumber()).to.equal(100)
   })
