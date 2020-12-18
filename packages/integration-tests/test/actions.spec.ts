@@ -1,16 +1,23 @@
-import * as fs from 'fs';
-import { Config, sleep } from '../../../common'
+import * as fs from 'fs'
+import { expect, use } from 'chai'
+import assert = require('assert')
+import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { solidity } from 'ethereum-waffle'
+
+import { Config, sleep, etherbase } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
+import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import assert = require('assert')
+
+use(solidity)
 
 import {
   Contract, ContractFactory, providers, Wallet,
-} from 'ethers';
+} from 'ethers'
 
-let SimpleStorage
+let erc20
+let simpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
@@ -44,18 +51,25 @@ const initWatcher = async () => {
 }
 
 const deploySimpleStorage = async () => {
-  const SimpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json').toString())
-  const SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l2Wallet)
-  const dummy = await SimpleStorageFactory.deploy()
-  await dummy.deployTransaction.wait()
-  return SimpleStorageFactory.deploy()
+  const simpleStorageJson = JSON.parse(fs.readFileSync('contracts/build/SimpleStorage.json').toString())
+  const simpleStorageFactory = new ContractFactory(simpleStorageJson.abi, simpleStorageJson.bytecode, l2Wallet)
+  return simpleStorageFactory.deploy()
+}
+
+const deployERC20 = async (initialAmount, name, decimals, symbol) => {
+  const erc20Json = JSON.parse(fs.readFileSync('contracts/build/ERC20.json').toString())
+  const ERC20Factory = new ContractFactory(erc20Json.abi, erc20Json.bytecode, l2Wallet)
+  erc20 = await ERC20Factory.deploy(
+    initialAmount, name, decimals, symbol
+  )
+  return erc20
 }
 
 const deposit = async (amount, value) => {
   const L1Messenger = new Contract(l1MessengerAddress, l1MessengerJSON, l1Wallet)
-  const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const calldata = simpleStorage.interface.encodeFunctionData('setValue', [value])
   const l1ToL2Tx = await L1Messenger.sendMessage(
-    SimpleStorage.address,
+    simpleStorage.address,
     calldata,
     5000000,
     { gasLimit: 7000000 }
@@ -65,27 +79,109 @@ const deposit = async (amount, value) => {
   const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
 
-describe('Messages', async () => {
+const withdraw = async (value) => {
+  const L2Messenger = new Contract(l2MessengerAddress, l2MessengerJSON.interface, l2Wallet)
+  const calldata = simpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l2ToL1Tx = await L2Messenger.sendMessage(
+    simpleStorage.address,
+    calldata,
+    5000000,
+    { gasLimit: 7000000 }
+  )
+  await l2Provider.waitForTransaction(l2ToL1Tx.hash)
+  const count = (await simpleStorage.totalCount()).toString()
+  await sleep(60000)
+}
+
+describe('SimpleStorage', async () => {
+  before(async () => {
+    const web3 = new Web3Provider(
+      ganache.provider({
+        mnemonic: Config.Mnemonic(),
+      })
+    )
+    // TODO: Figure out if Optimism Provider can be used at the same time as JsonRpcProvider
+    // let optimismProvider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
+  })
 
   it('should initialize the watcher', async () => {
     watcher = await initWatcher()
   })
 
   it('should deploy the simple storage contract', async () => {
-    SimpleStorage = await deploySimpleStorage()
+    simpleStorage = await deploySimpleStorage()
   })
 
   it('should deposit from L1->L2', async () => {
     const value = `0x${'42'.repeat(32)}`
     await deposit(1, value)
-    const msgSender = await SimpleStorage.msgSender()
-    const l1ToL2Sender = await SimpleStorage.l1ToL2Sender()
-    const storageVal = await SimpleStorage.value()
-    const count = await SimpleStorage.totalCount()
+    const msgSender = await simpleStorage.msgSender()
+    const l1ToL2Sender = await simpleStorage.l1ToL2Sender()
+    const storageVal = await simpleStorage.value()
+    const count = await simpleStorage.totalCount()
 
     msgSender.should.be.eq(l2MessengerAddress)
     l1ToL2Sender.should.be.eq(l1Wallet.address)
     storageVal.should.be.eq(value)
     count.toNumber().should.be.eq(1)
+  })
+
+  // TODO: Enable withdrawal test
+  it.skip('should withdraw from L2->L1', async () => {
+    const value = `0x${'77'.repeat(32)}`
+    await withdraw(value)
+    const msgSender = await simpleStorage.msgSender()
+    const l2ToL1Sender = await simpleStorage.l2ToL1Sender()
+    const storageVal = await simpleStorage.value()
+    const count = await simpleStorage.totalCount()
+
+    msgSender.should.be.eq(l1MessengerAddress)
+    l2ToL1Sender.should.be.eq(l2Wallet.address)
+    storageVal.should.be.eq(value)
+    count.toNumber().should.be.eq(1)
+  })
+})
+
+describe('ERC20', async () => {
+  const INITIAL_AMOUNT = 1000
+  const NAME = 'OVM Test'
+  const DECIMALS = 8
+  const SYMBOL = 'OVM'
+  const alice = new Wallet(etherbase, l2Provider)
+
+  it('should deploy the erc20 contract', async () => {
+    erc20 = await deployERC20(INITIAL_AMOUNT, NAME, DECIMALS, SYMBOL)
+  })
+
+  it('should set the total supply', async () => {
+    const totalSupply = await erc20.totalSupply()
+    expect(totalSupply.toNumber()).to.equal(1000)
+  })
+
+  it('should get the token name', async () => {
+    const name = await erc20.name()
+    expect(name).to.equal(NAME)
+  })
+
+  it('should get the token decimals', async () => {
+    const decimals = await erc20.decimals()
+    expect(decimals).to.equal(DECIMALS)
+  })
+
+  it('should get the token symbol', async () => {
+    const decimals = await erc20.symbol()
+    expect(decimals).to.equal(SYMBOL)
+  })
+
+  it('should assign initial balance', async () => {
+    const balance = await erc20.balanceOf(l2Wallet.address)
+    expect(balance.toNumber()).to.equal(1000)
+  })
+
+  it('should transfer amount to destination account', async () => {
+    const transfer = await erc20.transfer(alice.address, 100)
+    const receipt = await transfer.wait()
+    const newBalance = await erc20.balanceOf(alice.address)
+    expect(newBalance.toNumber()).to.equal(100)
   })
 })

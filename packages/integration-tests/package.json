@@ -43,6 +43,7 @@
     "@ethersproject/providers": "^5.0.9",
     "@ethersproject/transactions": "^5.0.5",
     "@ethersproject/wallet": "^5.0.4",
+    "ethereum-waffle": "^3.2.0",
     "ethers": "^5.0.23",
     "mocha": "^8.1.3"
   },
