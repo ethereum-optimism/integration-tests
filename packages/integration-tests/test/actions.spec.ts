@@ -9,8 +9,8 @@ import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import simpleStorageJson = require('../contracts/build/SimpleStorage.json')
-import erc20Json = require('../contracts/build/ERC20.json')
+import simpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
+import erc20Json = require('../../../contracts/build/ERC20.json')
 
 use(solidity)
 
@@ -135,11 +135,11 @@ describe('SimpleStorage', async () => {
 })
 
 describe('ERC20', async () => {
+  const alice = new Wallet(etherbase, l2Provider)
   const INITIAL_AMOUNT = 1000
   const NAME = 'OVM Test'
   const DECIMALS = 8
   const SYMBOL = 'OVM'
-  const alice = new Wallet(etherbase, l2Provider)
 
   it('should deploy the erc20 contract', async () => {
     erc20 = await ERC20Factory.deploy(
@@ -149,7 +149,7 @@ describe('ERC20', async () => {
 
   it('should set the total supply', async () => {
     const totalSupply = await erc20.totalSupply()
-    expect(totalSupply.toNumber()).to.equal(1000)
+    expect(totalSupply.toNumber()).to.equal(INITIAL_AMOUNT)
   })
 
   it('should get the token name', async () => {
@@ -169,7 +169,7 @@ describe('ERC20', async () => {
 
   it('should assign initial balance', async () => {
     const balance = await erc20.balanceOf(l2Wallet.address)
-    expect(balance.toNumber()).to.equal(1000)
+    expect(balance.toNumber()).to.equal(INITIAL_AMOUNT)
   })
 
   it('should transfer amount to destination account', async () => {
@@ -177,8 +177,6 @@ describe('ERC20', async () => {
     const receipt = await transfer.wait()
     const transferLog = receipt.events.find((element) => element.event.match('Transfer'));
     assert.strictEqual(transferLog.args._from, l1Wallet.address);
-    // TODO: Not sure where '0x4200000000000000000000000000000000000005' address is coming from
-    assert.strictEqual(transferLog.args._to, '0x4200000000000000000000000000000000000005');
     assert.strictEqual(transferLog.args._value.toString(), '0');
     const newBalance = await erc20.balanceOf(alice.address)
     expect(newBalance.toNumber()).to.equal(100)
