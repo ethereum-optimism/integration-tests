@@ -1,41 +1,51 @@
 # Integration Tests
 
-Tests can be added to `packages/integration-tests`. These tests are built into a
-Docker container and ran with `docker-compose` along with the rest of the stack.
+Typescript based integration test repo for Optimistic Ethereum.
 
-## Running in CI
+Test suites are defined as a package in the `packages` directory.
+This repo can be ran on its own or as part of
+[Optimism Integration](https://github.com/ethereum-optimism/optimism-integration).
 
-When this runs in CI, it references the `latest` images in ECR for:
-* Postgres
-* Rollup Services
-* L2 Geth
-* Ganache CLI (for simulating L1)
+
+## Running with Optimism Integration
+
+The [Optimism Integration](https://github.com/ethereum-optimism/optimism-integration)
+repo can be used to autotmatically configure and run the test suites found
+in this repo. See the [README](https://github.com/ethereum-optimism/optimism-integration/blob/master/README.md)
+for usage information.
+
+It is assumed that each test suite gets a fresh state when running this way.
+This means that the packages must not depend on each other.
+
+Docker images found on [Dockerhub](https://hub.docker.com/u/ethereumoptimism)
+are used when running the test suites this way.
 
 ## Running locally
 
-This repo can be ran locally against Docker images built from arbitrary git
-refs. `scripts/test.sh` will autotmatically build images that don't already
-exist and run them as part of the integration test suite.
+This repo can be ran locally against existing services but the configuration
+must be handled by the user. A `.env` file will be used to populate the
+configuration when then environment variable `NODE_ENV` is set to `local`.
+
+There should be a `yarn` script for each package found in `packages`.
 
 ```bash
-$ ./scripts/test.sh
-Build docker images and test using git branches.
-
-CLI Arguments:
-  -m|--microservices   - microservices branch
-  -p|--postgres        - postgres branch
-  -g|--gethl2          - gethl2 branch
-  -l|--logs            - grep -E log filter
-
-Default values for branches are master.
-Will rebuild if new commits to a branch are detected.
-
-
-For filtering logs with -l, use the | to delimit names of services.
-Possible services are geth_l2, postgres, l1_chain, integration_tests.
-Example:
-$ ./scripts/test.sh -l 'geth_l2|integration_tests'
-
-Example:
-$ ./scripts/test.sh -p master -m new-feature-x -g new-feature-y
+$ yarn test:integration-tests
+$ yarn test:tx-ingestion
 ```
+
+The environment variables that are used by this repository can be found in
+the `Config` class in `common.ts`.
+
+| Environment Variable            | Description |
+| -----------                     | ----------- |
+| `L1_NODE_WEB3_URL`              | L1 HTTP endpoint |
+| `L2_NODE_WEB3_URL`              | L2 HTTP endpoint |
+| `MNEMONIC`                      | Mnemonic used to derive keys |
+| `ETH1_ADDRESS_RESOLVER_ADDRESS` | Address Resolver Address |
+| `SEQUENCER_PRIVATE_KEY`         | Private key used by sequencer |
+| `DEPLOYER_PRIVATE_KEY`          | Private key used by deployer |
+| `TARGET_GAS_LIMIT`              | L2 gas limit |
+| `CHAIN_ID`                      | L2 Chain ID |
+
+
+The test suites must not run in parallel.
