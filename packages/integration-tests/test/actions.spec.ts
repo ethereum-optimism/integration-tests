@@ -12,8 +12,6 @@ import { getContractInterface, getContractFactory } from '@eth-optimism/contract
 import simpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import erc20Json = require('../../../contracts/build/ERC20.json')
 
-use(solidity)
-
 import {
   Contract, ContractFactory, providers, Wallet,
 } from 'ethers'
@@ -175,10 +173,15 @@ describe('ERC20', async () => {
   it('should transfer amount to destination account', async () => {
     const transfer = await erc20.transfer(alice.address, 100)
     const receipt = await transfer.wait()
-    const transferLog = receipt.events.find((element) => element.event.match('Transfer'));
-    assert.strictEqual(transferLog.args._from, l1Wallet.address);
-    assert.strictEqual(transferLog.args._value.toString(), '0');
-    const newBalance = await erc20.balanceOf(alice.address)
-    expect(newBalance.toNumber()).to.equal(100)
+
+    // There are two events from the transfer with the first being 
+    // the fee of value 0 and the second of the value transfered (100)
+    const transferFeeEvent = receipt.events[0]
+    const transferEvent = receipt.events[1]
+    assert.strictEqual(transferEvent.args._from, l1Wallet.address);
+    assert.strictEqual(transferFeeEvent.args._value.toString(), '0');
+    assert.strictEqual(transferEvent.args._value.toString(), '100');
+    const senderBalance = await erc20.balanceOf(alice.address)
+    expect(senderBalance.toNumber()).to.equal(100)
   })
 })
