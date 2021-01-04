@@ -174,7 +174,7 @@ describe('ERC20', async () => {
     const transfer = await erc20.transfer(alice.address, 100)
     const receipt = await transfer.wait()
 
-    // There are two events from the transfer with the first being 
+    // There are two events from the transfer with the first being
     // the fee of value 0 and the second of the value transfered (100)
     const transferFeeEvent = receipt.events[0]
     const transferEvent = receipt.events[1]
