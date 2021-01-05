@@ -176,6 +176,7 @@ describe('ERC20', async () => {
 
     // There are two events from the transfer with the first being
     // the fee of value 0 and the second of the value transfered (100)
+    assert.strictEqual(receipt.events.length, 2)
     const transferFeeEvent = receipt.events[0]
     const transferEvent = receipt.events[1]
     assert.strictEqual(transferEvent.args._from, l1Wallet.address);
