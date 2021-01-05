@@ -22,6 +22,7 @@ let l1MessengerAddress
 let l2MessengerAddress
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
+const SEQUENCER_PRIVATE_KEY = Config.SequencerPrivateKey()
 const goerliURL = Config.L1NodeUrlWithPort()
 const optimismURL = Config.L2NodeUrlWithPort()
 const l1Provider = new JsonRpcProvider(goerliURL)
@@ -104,7 +105,7 @@ describe('SimpleStorage', async () => {
 })
 
 describe('ERC20', async () => {
-  const alice = new Wallet(etherbase, l2Provider)
+  const alice = new Wallet(SEQUENCER_PRIVATE_KEY, l2Provider)
   const INITIAL_AMOUNT = 1000
   const NAME = 'OVM Test'
   const DECIMALS = 8
@@ -153,7 +154,9 @@ describe('ERC20', async () => {
     assert.strictEqual(transferEvent.args._from, l1Wallet.address);
     assert.strictEqual(transferFeeEvent.args._value.toString(), '0');
     assert.strictEqual(transferEvent.args._value.toString(), '100');
-    const senderBalance = await erc20.balanceOf(alice.address)
-    expect(senderBalance.toNumber()).to.equal(100)
+    const receiverBalance = await erc20.balanceOf(alice.address)
+    expect(receiverBalance.toNumber()).to.equal(100)
+    const senderBalance = await erc20.balanceOf(l2Wallet.address)
+    expect(senderBalance.toNumber()).to.equal(900)
   })
 })
