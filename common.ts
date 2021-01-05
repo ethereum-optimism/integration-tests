@@ -54,7 +54,7 @@ export class Config {
 
   // TODO: this is the address manager
   public static AddressResolverAddress(): string {
-    return process.env.ETH1_ADDRESS_RESOLVER_ADDRESS
+    return process.env.ETH1_ADDRESS_MANAGER_ADDRESS
   }
 
   public static StateCommitmentChainContractAddress(): string {
