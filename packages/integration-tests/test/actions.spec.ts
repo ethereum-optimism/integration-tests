@@ -70,20 +70,6 @@ const deposit = async (amount, value) => {
   const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
 
-const withdraw = async (value) => {
-  const L2Messenger = new Contract(l2MessengerAddress, l2MessengerJSON.interface, l2Wallet)
-  const calldata = simpleStorage.interface.encodeFunctionData('setValue', [value])
-  const l2ToL1Tx = await L2Messenger.sendMessage(
-    simpleStorage.address,
-    calldata,
-    5000000,
-    { gasLimit: 7000000 }
-  )
-  await l2Provider.waitForTransaction(l2ToL1Tx.hash)
-  const count = (await simpleStorage.totalCount()).toString()
-  await sleep(60000)
-}
-
 describe('SimpleStorage', async () => {
   before(async () => {
     const web3 = new Web3Provider(
@@ -112,21 +98,6 @@ describe('SimpleStorage', async () => {
 
     msgSender.should.be.eq(l2MessengerAddress)
     l1ToL2Sender.should.be.eq(l1Wallet.address)
-    storageVal.should.be.eq(value)
-    count.toNumber().should.be.eq(1)
-  })
-
-  // TODO: Enable withdrawal test
-  it.skip('should withdraw from L2->L1', async () => {
-    const value = `0x${'77'.repeat(32)}`
-    await withdraw(value)
-    const msgSender = await simpleStorage.msgSender()
-    const l2ToL1Sender = await simpleStorage.l2ToL1Sender()
-    const storageVal = await simpleStorage.value()
-    const count = await simpleStorage.totalCount()
-
-    msgSender.should.be.eq(l1MessengerAddress)
-    l2ToL1Sender.should.be.eq(l2Wallet.address)
     storageVal.should.be.eq(value)
     count.toNumber().should.be.eq(1)
   })
