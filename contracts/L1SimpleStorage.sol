@@ -8,8 +8,7 @@ contract L1SimpleStorage {
     address public msgSender;
     address public l2ToL1Sender;
     bytes32 public value;
-    uint256 public totalCount;
-
+    uint public totalCount;
     function setValue(bytes32 newValue) public {
         msgSender = msg.sender;
         l2ToL1Sender = ICrossDomainMessenger(msg.sender).xDomainMessageSender();
