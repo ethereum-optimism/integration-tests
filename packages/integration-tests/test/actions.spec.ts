@@ -10,7 +10,7 @@ import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 import simpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
-import SimpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
+import l1SimnpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
 import erc20Json = require('../../../contracts/build/ERC20.json')
 
 import {
@@ -32,8 +32,7 @@ const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
 const l1MessengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
-// const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
-const l2MessengerJSON = JSON.parse(fs.readFileSync('../../contracts/build/OVM_L2CrossDomainMessenger.json').toString())
+const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
 
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
@@ -41,7 +40,9 @@ const AddressManager = new Contract(addressManagerAddress, addressManagerInterfa
 const simpleStorageFactory = new ContractFactory(
   simpleStorageJson.abi, simpleStorageJson.bytecode, l2Wallet
 )
-
+const l1SimpleStorageFactory = new ContractFactory(
+  l1SimnpleStorageJson.abi, l1SimnpleStorageJson.bytecode, l1Wallet
+)
 const ERC20Factory = new ContractFactory(
   erc20Json.abi, erc20Json.bytecode, l2Wallet
 )
@@ -77,7 +78,7 @@ const deposit = async (amount, value) => {
 }
 
 const withdraw = async (value) => {
-  const L2Messenger = new Contract(process.env.L2_MESSENGER_ADDRESS, l2MessengerJSON.abi, l2Wallet)
+  const L2Messenger = new Contract(l2MessengerAddress, l2MessengerJSON.interface, l2Wallet)
   const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l2ToL1Tx = await L2Messenger.sendMessage(
     l1SimpleStorage.address,
@@ -109,7 +110,6 @@ describe('SimpleStorage', async () => {
   })
 
   it('should deploy the l1 simple storage contract', async () => {
-    const l1SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l1Wallet)
     l1SimpleStorage = await l1SimpleStorageFactory.deploy()
     await l1SimpleStorage.deployTransaction.wait()
   })
