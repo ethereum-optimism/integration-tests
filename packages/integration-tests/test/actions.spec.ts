@@ -11,8 +11,6 @@ import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 import simpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import SimpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
-
-let SimpleStorage
 import erc20Json = require('../../../contracts/build/ERC20.json')
 
 import {
@@ -24,7 +22,6 @@ let simpleStorage
 let l1SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
-let L2Messenger
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const SEQUENCER_PRIVATE_KEY = Config.SequencerPrivateKey()
@@ -38,9 +35,6 @@ const l1MessengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
 // const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
 const l2MessengerJSON = JSON.parse(fs.readFileSync('../../contracts/build/OVM_L2CrossDomainMessenger.json').toString())
 
-L2Messenger = new Contract(process.env.L2_MESSENGER_ADDRESS, l2MessengerJSON.abi, l2Wallet)
-
-console.log(l2MessengerJSON)
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
@@ -83,26 +77,17 @@ const deposit = async (amount, value) => {
 }
 
 const withdraw = async (value) => {
-  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [`0x${'77'.repeat(32)}`])
+  const L2Messenger = new Contract(process.env.L2_MESSENGER_ADDRESS, l2MessengerJSON.abi, l2Wallet)
+  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l2ToL1Tx = await L2Messenger.sendMessage(
     l1SimpleStorage.address,
     calldata,
     5000000,
     { gasLimit: 7000000 }
   )
-  await l2Provider.waitForTransaction(l2ToL1Tx.hash)
-
-  console.log(l1SimpleStorage)
-  console.log('L2->L1 setValue tx complete: http://https://l2-explorer.surge.sh/tx/' + l2ToL1Tx.hash)
-  const count = (await l1SimpleStorage.totalCount()).toString()
-  // while (true) {
-  //   console.log('simple storage msg.sender', await l1SimpleStorage.msgSender())
-  //   console.log('simple storage xDomainMessageSender', await l1SimpleStorage.l2ToL1Sender())
-  //   console.log('simple storage value', await l1SimpleStorage.value())
-  //   console.log('totalCount', (await l1SimpleStorage.totalCount()).toString())
-  //   console.log('sleeping 1 minute...')
-  //   await sleep(60000)
-  // }
+  l2ToL1Tx.wait()
+  const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
+  const receipt = await watcher.getL1TransactionReceipt(msgHash)
 }
 
 describe('SimpleStorage', async () => {
@@ -124,15 +109,12 @@ describe('SimpleStorage', async () => {
   })
 
   it('should deploy the l1 simple storage contract', async () => {
-    const SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l1Wallet)
-    SimpleStorage = await SimpleStorageFactory.deploy()
-    await SimpleStorage.deployTransaction.wait()
-    console.log('Deployed SimpleStorage to', SimpleStorage.address)
-    console.log('deployment tx: https://goerli.etherscan.io/tx/' + SimpleStorage.deployTransaction.hash)
-    await sleep(3000)
+    const l1SimpleStorageFactory = new ContractFactory(SimpleStorageJson.abi, SimpleStorageJson.bytecode, l1Wallet)
+    l1SimpleStorage = await l1SimpleStorageFactory.deploy()
+    await l1SimpleStorage.deployTransaction.wait()
   })
 
-  it.skip('should deposit from L1->L2', async () => {
+  it('should deposit from L1->L2', async () => {
     const value = `0x${'42'.repeat(32)}`
     await deposit(1, value)
     const msgSender = await simpleStorage.msgSender()
@@ -147,26 +129,22 @@ describe('SimpleStorage', async () => {
   })
 
   it('should withdraw from L2->L1', async () => {
-    const calldata = SimpleStorage.interface.encodeFunctionData('setValue', [`0x${'77'.repeat(32)}`])
-    const l2ToL1Tx = await L2Messenger.sendMessage(
-      SimpleStorage.address,
-      calldata,
-      5000000,
-      { gasLimit: 7000000 }
-    )
-    await l2Provider.waitForTransaction(l2ToL1Tx.hash)
-    console.log('L2->L1 setValue tx complete: http://https://l2-explorer.surge.sh/tx/' + l2ToL1Tx.hash)
-    const count = (await SimpleStorage.totalCount()).toString()
-    console.log('simple storage msg.sender', await SimpleStorage.msgSender())
-    console.log('simple storage xDomainMessageSender', await SimpleStorage.l2ToL1Sender())
-    console.log('simple storage value', await SimpleStorage.value())
-    console.log('totalCount', (await SimpleStorage.totalCount()).toString())
-    console.log('sleeping 1 minute...')
-    await sleep(60000)
+    const value = `0x${'77'.repeat(32)}`
+    await withdraw(value)
+
+    const msgSender = await l1SimpleStorage.msgSender()
+    const l2ToL1Sender = await l1SimpleStorage.l2ToL1Sender()
+    const storageVal = await l1SimpleStorage.value()
+    const count = await l1SimpleStorage.totalCount()
+
+    msgSender.should.be.eq(l1MessengerAddress)
+    l2ToL1Sender.should.be.eq(l2Wallet.address)
+    storageVal.should.be.eq(value)
+    count.toNumber().should.be.eq(1)
   })
 })
 
-describe.skip('ERC20', async () => {
+describe('ERC20', async () => {
   const alice = new Wallet(SEQUENCER_PRIVATE_KEY, l2Provider)
   const INITIAL_AMOUNT = 1000
   const NAME = 'OVM Test'
