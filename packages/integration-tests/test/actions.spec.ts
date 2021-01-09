@@ -18,7 +18,8 @@ import {
 } from 'ethers'
 
 let erc20
-let simpleStorage
+// TODO: Change simpleStorage back to let simpleStorage
+const simpleStorage = null
 let l1SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
@@ -105,14 +106,14 @@ describe('SimpleStorage', async () => {
     // With that said, there is another issue in that the contract will have to be deployed
     // twice given two factories via ContractFactory from the ethersjs library
     // (Using l2Wallet for the simpleStorageFactory and l1Wallet for the l1SimpleStorageFactory)
-    // For additional clarity all instances of SimpleStorage that are for L2 should be renamed 
+    // For additional clarity all instances of SimpleStorage that are for L2 should be renamed
     // such as l2SimpleStorage.
     // The problem experienced at the moment is that when both of these contracts are deployed via
     // their factories they appear to be interfering with each other
     // For example if a deposit from L1->L2 is called before withdraw, the withdraw function
     // ends up breaking and hanging and an error message is output from the message relayer with
     // the following: `VM Exception while processing transaction: revert Invalid inclusion proof`
-    // More research is necessary to determine the cause of this error and will be the focus for 
+    // More research is necessary to determine the cause of this error and will be the focus for
     // upcoming commits.
     // To reproduce the issue, first run `docker-compose pull`, then start the system with `./up.sh`
     // Run the integration tests from within the integration-tests repo using the command
