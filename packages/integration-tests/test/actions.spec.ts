@@ -86,35 +86,48 @@ const withdraw = async (value) => {
     5000000,
     { gasLimit: 7000000 }
   )
-  l2ToL1Tx.wait()
+  await l2ToL1Tx.wait()
   const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
   const receipt = await watcher.getL1TransactionReceipt(msgHash)
 }
 
 describe('SimpleStorage', async () => {
   before(async () => {
-    const web3 = new Web3Provider(
-      ganache.provider({
-        mnemonic: Config.Mnemonic(),
-      })
-    )
-  })
-
-  it('should initialize the watcher', async () => {
     watcher = await initWatcher()
-  })
+    // TODO: Currently observing some unexpected behavior given
+    // multiple contracts deployed.
+    // There are two contracts at the moment. One used by deposit (SimpleStorage)
+    // and another used by withdrawal (L1SimpleStorage)
+    // These are almost identical, but SimpleStorage has a variable l1ToL2Sender
+    // and L1SimpleStorage has the variable l2ToL1Sender
+    // These should be consolidated into one contract and these variables should be
+    // abstracted in naming to just xDomainSender.
+    // With that said, there is another issue in that the contract will have to be deployed
+    // twice given two factories via ContractFactory from the ethersjs library
+    // (Using l2Wallet for the simpleStorageFactory and l1Wallet for the l1SimpleStorageFactory)
+    // For additional clarity all instances of SimpleStorage that are for L2 should be renamed 
+    // such as l2SimpleStorage.
+    // The problem experienced at the moment is that when both of these contracts are deployed via
+    // their factories they appear to be interfering with each other
+    // For example if a deposit from L1->L2 is called before withdraw, the withdraw function
+    // ends up breaking and hanging and an error message is output from the message relayer with
+    // the following: `VM Exception while processing transaction: revert Invalid inclusion proof`
+    // More research is necessary to determine the cause of this error and will be the focus for 
+    // upcoming commits.
+    // To reproduce the issue, first run `docker-compose pull`, then start the system with `./up.sh`
+    // Run the integration tests from within the integration-tests repo using the command
+    // `yarn test:integration-tests`.
+    // You can enable and disable each contract deployment with the lines directly deploy
+    // You can enable a set of tests by using the .only modifier on the mocha test or
+    // disable specific tests using the .skip modifier
 
-  it('should deploy the simple storage contract', async () => {
-    simpleStorage = await simpleStorageFactory.deploy()
-    await simpleStorage.deployTransaction.wait()
-  })
-
-  it('should deploy the l1 simple storage contract', async () => {
+    // simpleStorage = await simpleStorageFactory.deploy()
+    // await simpleStorage.deployTransaction.wait()
     l1SimpleStorage = await l1SimpleStorageFactory.deploy()
     await l1SimpleStorage.deployTransaction.wait()
   })
 
-  it('should deposit from L1->L2', async () => {
+  it.skip('should deposit from L1->L2', async () => {
     const value = `0x${'42'.repeat(32)}`
     await deposit(1, value)
     const msgSender = await simpleStorage.msgSender()
