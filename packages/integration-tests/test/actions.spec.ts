@@ -9,9 +9,9 @@ import { Watcher } from '@eth-optimism/watcher'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import simpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
+import simpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 import l1SimnpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
-import erc20Json = require('../../../contracts/build/ERC20.json')
+import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
 import {
   Contract, ContractFactory, providers, Wallet,
@@ -165,7 +165,7 @@ describe('ERC20', async () => {
   const DECIMALS = 8
   const SYMBOL = 'OVM'
 
-  it('should deploy the erc20 contract', async () => {
+  before(async () => {
     erc20 = await ERC20Factory.deploy(
       INITIAL_AMOUNT, NAME, DECIMALS, SYMBOL
     )

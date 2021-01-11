@@ -36,3 +36,4 @@ jobs:
         run: |
           yarn clean
           yarn build
+          yarn build-ovm
