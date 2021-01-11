@@ -3,6 +3,7 @@
 
 # Build
 /**/build/
+/**/build-ovm/
 /**/artifacts/
 /**/cache/
 
