@@ -16,7 +16,6 @@ import {
 } from 'ethers'
 
 let erc20
-let l1SimpleStorage
 let l2SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
@@ -37,9 +36,6 @@ const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
 const l2SimpleStorageFactory = new ContractFactory(
   l2SimpleStorageJson.abi, l2SimpleStorageJson.bytecode, l2Wallet
-)
-const l1SimpleStorageFactory = new ContractFactory(
-  l1SimnpleStorageJson.abi, l1SimnpleStorageJson.bytecode, l1Wallet
 )
 const ERC20Factory = new ContractFactory(
   erc20Json.abi, erc20Json.bytecode, l2Wallet

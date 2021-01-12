@@ -8,7 +8,6 @@ import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 import l1SimnpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
-import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
 import {
@@ -16,7 +15,6 @@ import {
 } from 'ethers'
 
 let l1SimpleStorage
-let l2SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
@@ -35,9 +33,6 @@ const l2MessengerFactory = getContractFactory('OVM_L2CrossDomainMessenger')
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
-const l2SimpleStorageFactory = new ContractFactory(
-  l2SimpleStorageJson.abi, l2SimpleStorageJson.bytecode, l2Wallet
-)
 
 const l1SimpleStorageFactory = new ContractFactory(
   l1SimnpleStorageJson.abi, l1SimnpleStorageJson.bytecode, l1Wallet
