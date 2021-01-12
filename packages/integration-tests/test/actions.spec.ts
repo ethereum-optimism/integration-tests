@@ -91,7 +91,7 @@ const withdraw = async (value) => {
   // const receipt = await watcher.getL1TransactionReceipt(msgHash)
   await l2Provider.waitForTransaction(l2ToL1Tx.hash)
   console.log('L2->L1 setValue tx complete: http://https://l2-explorer.surge.sh/tx/' + l2ToL1Tx.hash)
-  await sleep(60000)
+  await sleep(600000)
 }
 
 describe('L1 SimpleStorage', async () => {
