@@ -1,8 +1,6 @@
-import * as fs from 'fs'
-import { expect, use } from 'chai'
+import { expect } from 'chai'
 import assert = require('assert')
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
-import { solidity } from 'ethereum-waffle'
 
 import { Config, sleep, etherbase } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
@@ -76,46 +74,6 @@ const deposit = async (amount, value) => {
   const [msgHash] = await watcher.getMessageHashesFromL1Tx(l1ToL2Tx.hash)
   const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
-
-const withdraw = async (value) => {
-  const l2Messenger = new Contract(l2MessengerAddress, l2MessengerFactory.interface, l2Wallet)
-  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
-  const l2ToL1Tx = await l2Messenger.sendMessage(
-    l1SimpleStorage.address,
-    calldata,
-    5000000,
-    { gasLimit: 7000000 }
-  )
-  // await l2ToL1Tx.wait()
-  // const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
-  // const receipt = await watcher.getL1TransactionReceipt(msgHash)
-  await l2Provider.waitForTransaction(l2ToL1Tx.hash)
-  console.log('L2->L1 setValue tx complete: http://https://l2-explorer.surge.sh/tx/' + l2ToL1Tx.hash)
-  await sleep(600000)
-}
-
-describe('L1 SimpleStorage', async () => {
-  before(async () => {
-    watcher = await initWatcher()
-    l1SimpleStorage = await l1SimpleStorageFactory.deploy()
-    await l1SimpleStorage.deployTransaction.wait()
-  })
-
-  it('should withdraw from L2->L1', async () => {
-    const value = `0x${'77'.repeat(32)}`
-    await withdraw(value)
-
-    const msgSender = await l1SimpleStorage.msgSender()
-    const l2ToL1Sender = await l1SimpleStorage.l2ToL1Sender()
-    const storageVal = await l1SimpleStorage.value()
-    const count = await l1SimpleStorage.totalCount()
-
-    msgSender.should.be.eq(l1MessengerAddress)
-    l2ToL1Sender.should.be.eq(l2Wallet.address)
-    storageVal.should.be.eq(value)
-    count.toNumber().should.be.eq(1)
-  })
-})
 
 describe('L2 SimpleStorage', async () => {
   before(async () => {
