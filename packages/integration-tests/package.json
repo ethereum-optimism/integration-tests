@@ -15,7 +15,7 @@
     "clean": "rimraf build/ && rimraf build-ovm/",
     "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
     "lint": "tslint --format stylish --project .",
-    "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
+    "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 500000 --exit",
     "ci": "yarn test"
   },
   "keywords": [
