@@ -86,9 +86,12 @@ const withdraw = async (value) => {
     5000000,
     { gasLimit: 7000000 }
   )
-  await l2ToL1Tx.wait()
-  const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
-  const receipt = await watcher.getL1TransactionReceipt(msgHash)
+  // await l2ToL1Tx.wait()
+  // const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
+  // const receipt = await watcher.getL1TransactionReceipt(msgHash)
+  await l2Provider.waitForTransaction(l2ToL1Tx.hash)
+  console.log('L2->L1 setValue tx complete: http://https://l2-explorer.surge.sh/tx/' + l2ToL1Tx.hash)
+  await sleep(60000)
 }
 
 describe('L1 SimpleStorage', async () => {
