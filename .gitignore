@@ -2,8 +2,8 @@
 /**/node_modules/
 
 # Build
-/**/build/
-/**/build-ovm/
+# /**/build/
+# /**/build-ovm/
 /**/artifacts/
 /**/cache/
 
