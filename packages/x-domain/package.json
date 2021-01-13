@@ -1,5 +1,5 @@
 {
-  "name": "@eth-optimism/integration-tests",
+  "name": "@eth-optimism/x-domain",
   "version": "0.0.1",
   "description": "[Optimism] Optimistic Rollup Integration Test Suite",
   "main": "build/index.js",

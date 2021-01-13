@@ -1,21 +1,20 @@
 import { expect } from 'chai'
 import assert = require('assert')
-import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
-import { Config, sleep, etherbase } from '../../../common'
+import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
-import { ganache } from '@eth-optimism/ovm-toolchain'
-import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 import l1SimnpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
 import {
-  Contract, ContractFactory, providers, Wallet,
+  Contract, ContractFactory, Wallet,
 } from 'ethers'
 
 let erc20
+let l1SimpleStorage
 let l2SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
@@ -36,6 +35,9 @@ const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
 const l2SimpleStorageFactory = new ContractFactory(
   l2SimpleStorageJson.abi, l2SimpleStorageJson.bytecode, l2Wallet
+)
+const l1SimpleStorageFactory = new ContractFactory(
+  l1SimnpleStorageJson.abi, l1SimnpleStorageJson.bytecode, l1Wallet
 )
 const ERC20Factory = new ContractFactory(
   erc20Json.abi, erc20Json.bytecode, l2Wallet
@@ -70,6 +72,43 @@ const deposit = async (amount, value) => {
   const [msgHash] = await watcher.getMessageHashesFromL1Tx(l1ToL2Tx.hash)
   const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
+
+const withdraw = async (value) => {
+  const l2Messenger = new Contract(l2MessengerAddress, l2MessengerFactory.interface, l2Wallet)
+  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l2ToL1Tx = await l2Messenger.sendMessage(
+    l1SimpleStorage.address,
+    calldata,
+    5000000,
+    { gasLimit: 7000000 }
+  )
+  await l2ToL1Tx.wait()
+  const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
+  const receipt = await watcher.getL1TransactionReceipt(msgHash)
+}
+
+describe('L1 SimpleStorage', async () => {
+  before(async () => {
+    watcher = await initWatcher()
+    l1SimpleStorage = await l1SimpleStorageFactory.deploy()
+    await l1SimpleStorage.deployTransaction.wait()
+  })
+
+  it('should withdraw from L2->L1', async () => {
+    const value = `0x${'77'.repeat(32)}`
+    await withdraw(value)
+
+    const msgSender = await l1SimpleStorage.msgSender()
+    const l2ToL1Sender = await l1SimpleStorage.l2ToL1Sender()
+    const storageVal = await l1SimpleStorage.value()
+    const count = await l1SimpleStorage.totalCount()
+
+    msgSender.should.be.eq(l1MessengerAddress)
+    l2ToL1Sender.should.be.eq(l2Wallet.address)
+    storageVal.should.be.eq(value)
+    count.toNumber().should.be.eq(1)
+  })
+})
 
 describe('L2 SimpleStorage', async () => {
   before(async () => {
