@@ -5,7 +5,7 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import l1SimnpleStorageJson = require('../../../contracts/build/L1SimpleStorage.json')
+import l1SimnpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
@@ -99,12 +99,12 @@ describe('L1 SimpleStorage', async () => {
     await withdraw(value)
 
     const msgSender = await l1SimpleStorage.msgSender()
-    const l2ToL1Sender = await l1SimpleStorage.l2ToL1Sender()
+    const xDomainSender = await l1SimpleStorage.xDomainSender()
     const storageVal = await l1SimpleStorage.value()
     const count = await l1SimpleStorage.totalCount()
 
     msgSender.should.be.eq(l1MessengerAddress)
-    l2ToL1Sender.should.be.eq(l2Wallet.address)
+    xDomainSender.should.be.eq(l2Wallet.address)
     storageVal.should.be.eq(value)
     count.toNumber().should.be.eq(1)
   })
@@ -121,12 +121,12 @@ describe('L2 SimpleStorage', async () => {
     const value = `0x${'42'.repeat(32)}`
     await deposit(1, value)
     const msgSender = await l2SimpleStorage.msgSender()
-    const l1ToL2Sender = await l2SimpleStorage.l1ToL2Sender()
+    const xDomainSender = await l2SimpleStorage.xDomainSender()
     const storageVal = await l2SimpleStorage.value()
     const count = await l2SimpleStorage.totalCount()
 
     msgSender.should.be.eq(l2MessengerAddress)
-    l1ToL2Sender.should.be.eq(l1Wallet.address)
+    xDomainSender.should.be.eq(l1Wallet.address)
     storageVal.should.be.eq(value)
     count.toNumber().should.be.eq(1)
   })
