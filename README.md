@@ -10,7 +10,7 @@ This repo can be ran on its own or as part of
 ## Running with Optimism Integration
 
 The [Optimism Integration](https://github.com/ethereum-optimism/optimism-integration)
-repo can be used to autotmatically configure and run the test suites found
+repo can be used to automatically configure and run the test suites found
 in this repo. See the [README](https://github.com/ethereum-optimism/optimism-integration/blob/master/README.md)
 for usage information.
 
@@ -29,7 +29,7 @@ configuration when then environment variable `NODE_ENV` is set to `local`.
 There should be a `yarn` script for each package found in `packages`.
 
 ```bash
-$ yarn test:integration-tests
+$ yarn test:x-domain
 $ yarn test:tx-ingestion
 ```
 
