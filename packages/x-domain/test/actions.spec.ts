@@ -1,23 +1,21 @@
-import * as fs from 'fs'
-import { expect, use } from 'chai'
+import { expect } from 'chai'
 import assert = require('assert')
-import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
-import { solidity } from 'ethereum-waffle'
+import { JsonRpcProvider } from '@ethersproject/providers'
 
-import { Config, sleep, etherbase } from '../../../common'
+import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
-import { ganache } from '@eth-optimism/ovm-toolchain'
-import { OptimismProvider } from '@eth-optimism/provider'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import simpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
-import erc20Json = require('../../../contracts/build/ERC20.json')
+import l1SimnpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
+import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
+import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
 import {
-  Contract, ContractFactory, providers, Wallet,
+  Contract, ContractFactory, Wallet,
 } from 'ethers'
 
 let erc20
-let simpleStorage
+let l1SimpleStorage
+let l2SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
@@ -29,13 +27,17 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const l1MessengerJSON = getContractInterface('iOVM_BaseCrossDomainMessenger')
-const l2MessengerJSON = getContractFactory('OVM_L2CrossDomainMessenger')
+const l1MessengerInterface = getContractInterface('iOVM_BaseCrossDomainMessenger')
+const l2MessengerFactory = getContractFactory('OVM_L2CrossDomainMessenger')
+
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
-const simpleStorageFactory = new ContractFactory(
-  simpleStorageJson.abi, simpleStorageJson.bytecode, l2Wallet
+const l2SimpleStorageFactory = new ContractFactory(
+  l2SimpleStorageJson.abi, l2SimpleStorageJson.bytecode, l2Wallet
+)
+const l1SimpleStorageFactory = new ContractFactory(
+  l1SimnpleStorageJson.abi, l1SimnpleStorageJson.bytecode, l1Wallet
 )
 const ERC20Factory = new ContractFactory(
   erc20Json.abi, erc20Json.bytecode, l2Wallet
@@ -58,10 +60,10 @@ const initWatcher = async () => {
 }
 
 const deposit = async (amount, value) => {
-  const L1Messenger = new Contract(l1MessengerAddress, l1MessengerJSON, l1Wallet)
-  const calldata = simpleStorage.interface.encodeFunctionData('setValue', [value])
-  const l1ToL2Tx = await L1Messenger.sendMessage(
-    simpleStorage.address,
+  const l1Messenger = new Contract(l1MessengerAddress, l1MessengerInterface, l1Wallet)
+  const calldata = l2SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l1ToL2Tx = await l1Messenger.sendMessage(
+    l2SimpleStorage.address,
     calldata,
     5000000,
     { gasLimit: 7000000 }
@@ -71,34 +73,60 @@ const deposit = async (amount, value) => {
   const receipt = await watcher.getL2TransactionReceipt(msgHash)
 }
 
-describe('SimpleStorage', async () => {
+const withdraw = async (value) => {
+  const l2Messenger = new Contract(l2MessengerAddress, l2MessengerFactory.interface, l2Wallet)
+  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l2ToL1Tx = await l2Messenger.sendMessage(
+    l1SimpleStorage.address,
+    calldata,
+    5000000,
+    { gasLimit: 7000000 }
+  )
+  await l2ToL1Tx.wait()
+  const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
+  const receipt = await watcher.getL1TransactionReceipt(msgHash)
+}
+
+describe('L1 SimpleStorage', async () => {
   before(async () => {
-    const web3 = new Web3Provider(
-      ganache.provider({
-        mnemonic: Config.Mnemonic(),
-      })
-    )
-  })
-
-  it('should initialize the watcher', async () => {
     watcher = await initWatcher()
+    l1SimpleStorage = await l1SimpleStorageFactory.deploy()
+    await l1SimpleStorage.deployTransaction.wait()
   })
 
-  it('should deploy the simple storage contract', async () => {
-    simpleStorage = await simpleStorageFactory.deploy()
-    await simpleStorage.deployTransaction.wait()
+  it('should withdraw from L2->L1', async () => {
+    const value = `0x${'77'.repeat(32)}`
+    await withdraw(value)
+
+    const msgSender = await l1SimpleStorage.msgSender()
+    const xDomainSender = await l1SimpleStorage.xDomainSender()
+    const storageVal = await l1SimpleStorage.value()
+    const count = await l1SimpleStorage.totalCount()
+
+    msgSender.should.be.eq(l1MessengerAddress)
+    xDomainSender.should.be.eq(l2Wallet.address)
+    storageVal.should.be.eq(value)
+    count.toNumber().should.be.eq(1)
+  })
+})
+
+describe('L2 SimpleStorage', async () => {
+  before(async () => {
+    watcher = await initWatcher()
+    l2SimpleStorage = await l2SimpleStorageFactory.deploy()
+    await l2SimpleStorage.deployTransaction.wait()
   })
 
   it('should deposit from L1->L2', async () => {
     const value = `0x${'42'.repeat(32)}`
     await deposit(1, value)
-    const msgSender = await simpleStorage.msgSender()
-    const l1ToL2Sender = await simpleStorage.l1ToL2Sender()
-    const storageVal = await simpleStorage.value()
-    const count = await simpleStorage.totalCount()
+    const msgSender = await l2SimpleStorage.msgSender()
+    const xDomainSender = await l2SimpleStorage.xDomainSender()
+    const storageVal = await l2SimpleStorage.value()
+    const count = await l2SimpleStorage.totalCount()
 
     msgSender.should.be.eq(l2MessengerAddress)
-    l1ToL2Sender.should.be.eq(l1Wallet.address)
+    xDomainSender.should.be.eq(l1Wallet.address)
     storageVal.should.be.eq(value)
     count.toNumber().should.be.eq(1)
   })
@@ -106,40 +134,40 @@ describe('SimpleStorage', async () => {
 
 describe('ERC20', async () => {
   const alice = new Wallet(SEQUENCER_PRIVATE_KEY, l2Provider)
-  const INITIAL_AMOUNT = 1000
-  const NAME = 'OVM Test'
-  const DECIMALS = 8
-  const SYMBOL = 'OVM'
+  const initialAmount = 1000
+  const tokenName = 'OVM Test'
+  const tokenDecimals = 8
+  const TokenSymbol = 'OVM'
 
-  it('should deploy the erc20 contract', async () => {
+  before(async () => {
     erc20 = await ERC20Factory.deploy(
-      INITIAL_AMOUNT, NAME, DECIMALS, SYMBOL
+      initialAmount, tokenName, tokenDecimals, TokenSymbol
     )
   })
 
   it('should set the total supply', async () => {
     const totalSupply = await erc20.totalSupply()
-    expect(totalSupply.toNumber()).to.equal(INITIAL_AMOUNT)
+    expect(totalSupply.toNumber()).to.equal(initialAmount)
   })
 
   it('should get the token name', async () => {
     const name = await erc20.name()
-    expect(name).to.equal(NAME)
+    expect(name).to.equal(tokenName)
   })
 
   it('should get the token decimals', async () => {
     const decimals = await erc20.decimals()
-    expect(decimals).to.equal(DECIMALS)
+    expect(decimals).to.equal(tokenDecimals)
   })
 
   it('should get the token symbol', async () => {
     const symbol = await erc20.symbol()
-    expect(symbol).to.equal(SYMBOL)
+    expect(symbol).to.equal(TokenSymbol)
   })
 
   it('should assign initial balance', async () => {
     const balance = await erc20.balanceOf(l2Wallet.address)
-    expect(balance.toNumber()).to.equal(INITIAL_AMOUNT)
+    expect(balance.toNumber()).to.equal(initialAmount)
   })
 
   it('should transfer amount to destination account', async () => {

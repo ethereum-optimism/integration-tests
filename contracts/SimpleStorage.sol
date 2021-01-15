@@ -6,13 +6,19 @@ contract ICrossDomainMessenger {
 
 contract SimpleStorage {
     address public msgSender;
-    address public l1ToL2Sender;
+    address public xDomainSender;
     bytes32 public value;
-    uint public totalCount;
+    uint256 public totalCount;
+
     function setValue(bytes32 newValue) public {
         msgSender = msg.sender;
-        l1ToL2Sender = ICrossDomainMessenger(msg.sender).xDomainMessageSender();
+        xDomainSender = ICrossDomainMessenger(msg.sender)
+            .xDomainMessageSender();
         value = newValue;
         totalCount++;
+    }
+
+    function dumbSetValue(bytes32 newValue) public {
+        value = newValue;
     }
 }
