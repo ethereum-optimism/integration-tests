@@ -5,9 +5,9 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import l1SimnpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
-import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
-import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
+import l1SimnpleStorageJson = require('../build/contracts/build/SimpleStorage.json')
+import l2SimpleStorageJson = require('../build/contracts/build-ovm/SimpleStorage.json')
+import erc20Json = require('../build/contracts/build-ovm/ERC20.json')
 
 import {
   Contract, ContractFactory, Wallet,
