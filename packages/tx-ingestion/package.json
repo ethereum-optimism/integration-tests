@@ -9,8 +9,8 @@
   "scripts": {
     "all": "yarn clean && yarn build && && yarn test && yarn fix && yarn lint",
     "build": "yarn build:evm && yarn build:ovm && yarn build:ts",
-    "build:evm": "waffle ../../waffle-config.evm.json",
-    "build:ovm": "waffle ../../waffle-config.ovm.json",
+    "build:evm": "waffle ../../waffle-config.evm.js",
+    "build:ovm": "waffle ../../waffle-config.ovm.js",
     "build:ts": "mkdir -p build && tsc -p .",
     "clean": "rimraf build/ && rimraf build-ovm/",
     "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
