@@ -177,4 +177,26 @@ describe('Transactions', () => {
     // no L1TxOrigin
     assert(tx.l1TxOrigin === null)
   })
+
+  it('should not accept transactions with incorrect chainid', async () => {
+    // set err initially to false so that it can be set to true
+    // in the `try/catch` below
+    let err = false
+    const chainId = await provider.send('eth_chainId', [])
+    const signer = provider.getSigner()
+    try {
+      await signer.sendTransaction({
+        to: DUMMY_ADDRESS,
+        gasLimit: 4000000,
+        gasPrice: 0,
+        data: '0x',
+        value: 0,
+        chainId: parseInt(chainId, 16) + 1
+      })
+      assert(false)
+    } catch (e) {
+      err = true
+    }
+    assert(err)
+  })
 })
