@@ -15,7 +15,7 @@ import assert = require('assert')
 
 const DUMMY_ADDRESS = '0x' + '1234'.repeat(10)
 
-describe('Transactions', () => {
+describe.only('Transactions', () => {
   let provider
 
   before(async () => {
