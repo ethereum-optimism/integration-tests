@@ -49,18 +49,18 @@ describe('Transactions', () => {
     const txid = await provider.send('eth_sendRawEthSignTransaction', [hex])
     await provider.waitForTransaction(txid)
 
-    const transaction = await provider.getTransaction(txid)
-    assert(transaction !== null)
+    const sent = await provider.getTransaction(txid)
+    assert(sent !== null)
     // The correct signature hashing was performed
-    address.should.eq(transaction.from)
+    address.should.eq(sent.from)
 
     // The correct transaction is being returned
-    tx.to.should.eq(transaction.to)
-    tx.value.should.eq(transaction.value.toNumber())
-    tx.nonce.should.eq(transaction.nonce)
-    tx.gasLimit.should.eq(transaction.gasLimit.toNumber())
-    tx.gasPrice.should.eq(transaction.gasPrice.toNumber())
-    tx.data.should.eq(transaction.data)
+    tx.to.should.eq(sent.to)
+    tx.value.should.eq(sent.value.toNumber())
+    tx.nonce.should.eq(sent.nonce)
+    tx.gasLimit.should.eq(sent.gasLimit.toNumber())
+    tx.gasPrice.should.eq(sent.gasPrice.toNumber())
+    tx.data.should.eq(sent.data)
 
     // Fetching the transaction receipt works correctly
     const receipt = await provider.getTransactionReceipt(txid)
@@ -104,7 +104,7 @@ describe('Transactions', () => {
     num.should.eq(0)
   })
 
-  it.skip('should estimate gas', async () => {
+  it('should estimate gas', async () => {
     const template = {
       to: DUMMY_ADDRESS,
       gasLimit: 4000000,
@@ -140,6 +140,9 @@ describe('Transactions', () => {
     parseInt(chainId, 16).should.eq(expected)
   })
 
+  // Get a reference to the transaction sent in
+  // this test to use in the next test
+  let transaction
   it('should get transaction (l2 metadata)', async () => {
     const tx = {
       to: DUMMY_ADDRESS,
@@ -152,15 +155,21 @@ describe('Transactions', () => {
     const signer = provider.getSigner()
     const result = await signer.sendTransaction(tx)
     await result.wait()
-    const txn = await provider.getTransaction(result.hash)
+    transaction = await provider.getTransaction(result.hash)
 
-    txn.txType.should.be.a('string')
-    txn.queueOrigin.should.be.a('string')
+    transaction.txType.should.be.a('string')
+    transaction.txType.should.eq('EthSign')
+    transaction.queueOrigin.should.be.a('string')
+    transaction.queueOrigin.should.eq('sequencer')
+    // Only 1 transaction per block
+    transaction.transactionIndex.should.eq(0)
+    transaction.gasLimit.toNumber().should.eq(tx.gasLimit)
+    transaction.chainId.should.eq(Config.ChainID())
   })
 
   // This test depends on previous transactions being mined
   it('should get block with transactions', async () => {
-    const block = await provider.getBlockWithTransactions('latest')
+    const block = await provider.getBlockWithTransactions(transaction.blockHash)
     assert(block.number !== 0)
     // ethers JsonRpcProvider does not return the state root
     // but the OptimismProvider does.
