@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import assert = require('assert')
-import { JsonRpcProvider } from '@ethersproject/providers'
+import { JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
 
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
@@ -8,6 +8,11 @@ import { getContractInterface, getContractFactory } from '@eth-optimism/contract
 import l1SimnpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
+
+import { utils, BigNumber } from 'ethers'
+
+import { hexStrToNumber } from '@eth-optimism/core-utils'
+
 
 import {
   Contract, ContractFactory, Wallet,
@@ -27,8 +32,6 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const l1MessengerInterface = getContractInterface('iOVM_BaseCrossDomainMessenger')
-const l2MessengerFactory = getContractFactory('OVM_L2CrossDomainMessenger')
 
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
@@ -52,35 +55,60 @@ const initWatcher = async () => {
   })
 }
 
-const deposit = async (OVM_L1ETHGateway: Contract, value) => {
-  const depositTx = await OVM_L1ETHGateway.deposit({
-    value,
-    gasLimit: '0x100000'
-  })
-  await depositTx.wait()
-
-  const [msgHash] = await watcher.getMessageHashesFromL1Tx(depositTx.hash)
-  const receipt = await watcher.getL2TransactionReceipt(msgHash)
+const waitForCrossChainTransactions = async (tx: Promise<TransactionResponse>) => {
+  const res = await tx
+  const [msgHash] = await watcher.getMessageHashesFromL1Tx(res.hash)
+  await watcher.getL2TransactionReceipt(msgHash)
 }
 
-const withdraw = async (value) => {
-  const l2Messenger = new Contract(l2MessengerAddress, l2MessengerFactory.interface, l2Wallet)
-  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
-  const l2ToL1Tx = await l2Messenger.sendMessage(
-    l1SimpleStorage.address,
-    calldata,
-    5000000,
-    { gasLimit: 7000000 }
-  )
-  await l2ToL1Tx.wait()
-  const [msgHash] = await watcher.getMessageHashesFromL2Tx(l2ToL1Tx.hash)
-  const receipt = await watcher.getL1TransactionReceipt(msgHash)
-}
 
-describe('Native ETH', async () => {
+    // const deposit = async (OVM_L1ETHGateway: Contract, value) => {
+    //   const depositTx = 
+    //   await depositTx.wait()
+
+    //   const [msgHash] = await watcher.getMessageHashesFromL1Tx(depositTx.hash)
+    //   const receipt = await watcher.getL2TransactionReceipt(msgHash)
+    // }
+
+    // const withdraw = async (value) => {
+      
+    // }
+
+describe.only('Native ETH', async () => {
   let OVM_L1ETHGateway: Contract 
-
   let OVM_ETH: Contract
+
+  const logBalances = async (description: string = '') => {
+    console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ' + description + ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+      // const l1UserBalance = await l1Provider.send('eth_getBalance', [l1Wallet.address])
+      // console.log('L1 balance of l1 wallet ', l1Wallet.address, 'is', l1UserBalance.toString(10))
+      // const l1GatewayBalance = await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
+      // console.log('L1 balance of l1 gateway ', OVM_L1ETHGateway.address, 'is', l1GatewayBalance.toString())
+      // const l2Balance = await OVM_ETH.balanceOf(l2Wallet.address)
+      // console.log('L2 balance of l2 wallet ', l2Wallet.address, 'is', l2Balance.toString())\
+    console.log(await getBalances())
+    console.log('~'.repeat(description.length) + '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+  }
+
+  const getBalances = async ():
+    Promise<{
+      l1UserBalance: BigNumber,
+      l2UserBalance: BigNumber,
+      l1GatewayBalance: BigNumber
+    }> => {
+      const l1UserBalance = BigNumber.from(
+        await l1Provider.send('eth_getBalance', [l1Wallet.address])
+      )
+      const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
+      const l1GatewayBalance = BigNumber.from(
+        await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
+      )
+      return {
+        l1UserBalance,
+        l2UserBalance,
+        l1GatewayBalance
+      }
+    }
   
   before(async () => {
     watcher = await initWatcher()
@@ -99,6 +127,23 @@ describe('Native ETH', async () => {
   })
 
   it('deposit', async () => {
-    await deposit(OVM_L1ETHGateway,10)
+    const depositAmount = 1
+    await logBalances('pre deposit')
+    const preBalances = await getBalances()
+
+    await waitForCrossChainTransactions(
+      OVM_L1ETHGateway.deposit({
+        value: depositAmount,
+        gasLimit: '0x100000'
+      })
+    )
+    
+    const postBalances = await getBalances()
+    await logBalances('post deposit')
+
+    expect(postBalances.l1GatewayBalance).to.deep.eq(preBalances.l1GatewayBalance.add(depositAmount))
+    expect(postBalances.l1UserBalance).to.deep.eq(preBalances.l1UserBalance.sub(depositAmount))
+    expect(postBalances.l2UserBalance).to.deep.eq(preBalances.l2UserBalance.add(depositAmount))
+
   })
 })

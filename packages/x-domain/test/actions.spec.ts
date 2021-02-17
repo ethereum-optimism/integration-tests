@@ -27,7 +27,7 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const l1MessengerInterface = getContractInterface('iOVM_BaseCrossDomainMessenger')
+const l1MessengerInterface = getContractInterface('OVM_L1CrossDomainMessenger')
 const l2MessengerFactory = getContractFactory('OVM_L2CrossDomainMessenger')
 
 const addressManagerAddress = Config.AddressResolverAddress()
