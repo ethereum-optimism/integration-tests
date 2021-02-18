@@ -48,17 +48,9 @@ export class Config {
   }
 
   /* Contracts */
-  public static CanonicalTransactionChainContractAddress(): string {
-    return process.env.CANONICAL_TRANSACTION_CHAIN_CONTRACT_ADDRESS
-  }
-
   // TODO: this is the address manager
   public static AddressResolverAddress(): string {
     return process.env.ETH1_ADDRESS_RESOLVER_ADDRESS
-  }
-
-  public static StateCommitmentChainContractAddress(): string {
-    return process.env.STATE_COMMITMENT_CHAIN_CONTRACT_ADDRESS
   }
 
   public static SequencerPrivateKey(): string {
