@@ -4,7 +4,7 @@
  * https://github.com/ethereum-optimism
  */
 
-import { Config } from '../../../common'
+import { Config, sleep } from '../../../common'
 import { Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/ovm-toolchain'
 import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
@@ -185,6 +185,18 @@ describe('Transactions', () => {
     // The queue origin is the sequencer, not L1, so there is
     // no L1TxOrigin
     assert(tx.l1TxOrigin === null)
+  })
+
+  // There was a bug that causes transactions to be reingested over
+  // and over again only when a single transaction was in the
+  // canonical transaction chain. This test catches this by
+  // querying for the latest block and then waits and then queries
+  // the latest block again and then asserts that they are the same.
+  it('should not reingest transactions', async () => {
+    const one = await provider.getBlockWithTransactions('latest')
+    await sleep(2000)
+    const two = await provider.getBlockWithTransactions('latest')
+    assert.deepEqual(one, two)
   })
 
   it('should not accept transactions with incorrect chainid', async () => {
