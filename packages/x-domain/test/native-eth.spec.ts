@@ -11,8 +11,7 @@ import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
 import { utils, BigNumber } from 'ethers'
 
-import { hexStrToNumber } from '@eth-optimism/core-utils'
-
+const l1GatewayInterface = require('../temp/OVM_L1ETHGateway.json').abi // getContractInterface('OVM_L1ETHGateway') TODO: use this once the new npm contracts publish gives us access
 
 import {
   Contract, ContractFactory, Wallet,
@@ -56,8 +55,11 @@ const initWatcher = async () => {
 }
 
 const waitForCrossChainTransactions = async (tx: Promise<TransactionResponse>) => {
+  console.log('await ing tx')
   const res = await tx
+  console.log('await watcher.getMessages')
   const [msgHash] = await watcher.getMessageHashesFromL1Tx(res.hash)
+  console.log('await getL2TransactionReceipt')
   await watcher.getL2TransactionReceipt(msgHash)
 }
 
@@ -115,7 +117,7 @@ describe.only('Native ETH', async () => {
     
     OVM_L1ETHGateway = new Contract(
       await AddressManager.getAddress('OVM_L1ETHGateway'),
-      getContractInterface('OVM_L1ETHGateway'),
+      l1GatewayInterface,
       l1Wallet
     )
 
@@ -128,18 +130,22 @@ describe.only('Native ETH', async () => {
 
   it('deposit', async () => {
     const depositAmount = 1
-    await logBalances('pre deposit')
-    const preBalances = await getBalances()
 
+    console.log('getting preBalances...')
+    const preBalances = await getBalances()
+    console.log(`got prebalances, they are: ${JSON.stringify(preBalances)}`)
+
+    console.log('sending deposit TX...')
     await waitForCrossChainTransactions(
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
         gasLimit: '0x100000'
       })
     )
+    console.log('now getting postBalances')
     
     const postBalances = await getBalances()
-    await logBalances('post deposit')
+    console.log(`got post, they are: ${JSON.stringify(postBalances)}`)
 
     expect(postBalances.l1GatewayBalance).to.deep.eq(preBalances.l1GatewayBalance.add(depositAmount))
     expect(postBalances.l1UserBalance).to.deep.eq(preBalances.l1UserBalance.sub(depositAmount))
