@@ -5,11 +5,8 @@ import { JsonRpcProvider, TransactionReceipt, TransactionResponse } from '@ether
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
-import l1SimnpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
-import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
-import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
-import { utils, BigNumber, Transaction } from 'ethers'
+import { BigNumber, Transaction } from 'ethers'
 
 const l1GatewayInterface = require('../temp/OVM_L1ETHGateway.json').abi // getContractInterface('OVM_L1ETHGateway') TODO: use this once the new npm contracts publish gives us access
 
@@ -17,14 +14,11 @@ import {
   Contract, ContractFactory, Wallet,
 } from 'ethers'
 
-let erc20
-let l1SimpleStorage
-let l2SimpleStorage
 let l1MessengerAddress
 let l2MessengerAddress
 const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
 const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
-const SEQUENCER_PRIVATE_KEY = Config.SequencerPrivateKey()
+
 const goerliURL = Config.L1NodeUrlWithPort()
 const optimismURL = Config.L2NodeUrlWithPort()
 const l1Provider = new JsonRpcProvider(goerliURL)
@@ -37,6 +31,7 @@ const addressManagerInterface = getContractInterface('Lib_AddressManager')
 const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
 
 const OVM_ETH_ADDRESS = '0x4200000000000000000000000000000000000006'
+const PROXY_SEQUENCER_ENTRYPOINT_ADDRESS = '0x4200000000000000000000000000000000000004'
 
 let watcher
 const initWatcher = async () => {
@@ -58,7 +53,8 @@ type CrossDomainMessagePair = {
   l1tx: Transaction,
   l1receipt: TransactionReceipt,
   l2tx: Transaction, 
-  l2receipt: TransactionReceipt}
+  l2receipt: TransactionReceipt
+}
 
 const waitForDepositTypeTransaction = async (l1OriginatingTx: Promise<TransactionResponse>):Promise<CrossDomainMessagePair> => {
   const res = await l1OriginatingTx
@@ -79,7 +75,6 @@ const waitForDepositTypeTransaction = async (l1OriginatingTx: Promise<Transactio
 }
 
 // TODO: combine these elegantly? v^v^v
-
 const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<TransactionResponse>):Promise<CrossDomainMessagePair> => {
   const res = await l2OriginatingTx
   await res.wait()
@@ -106,19 +101,22 @@ describe.only('Native ETH Integration Tests', async () => {
     Promise<{
       l1UserBalance: BigNumber,
       l2UserBalance: BigNumber,
-      l1GatewayBalance: BigNumber
+      l1GatewayBalance: BigNumber,
+      sequencerBalance: BigNumber
     }> => {
       const l1UserBalance = BigNumber.from(
         await l1Provider.send('eth_getBalance', [l1Wallet.address])
       )
       const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
+      const sequencerBalance = await OVM_ETH.balanceOf(PROXY_SEQUENCER_ENTRYPOINT_ADDRESS)
       const l1GatewayBalance = BigNumber.from(
         await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
       )
       return {
         l1UserBalance,
         l2UserBalance,
-        l1GatewayBalance
+        l1GatewayBalance,
+        sequencerBalance
       }
     }
   
