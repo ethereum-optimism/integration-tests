@@ -61,17 +61,15 @@ type CrossDomainMessagePair = {
   l2receipt: TransactionReceipt}
 
 const waitForDepositTypeTransaction = async (l1OriginatingTx: Promise<TransactionResponse>):Promise<CrossDomainMessagePair> => {
-  console.log('await ing tx')
   const res = await l1OriginatingTx
   await res.wait()
 
   const l1tx = await l1Provider.getTransaction(res.hash)
   const l1receipt = await l1Provider.getTransactionReceipt(res.hash)
-  console.log('await watcher.getMessageHashesFromL1Tx')
   const [l1ToL2XDomainMsgHash] = await watcher.getMessageHashesFromL1Tx(res.hash)
-  console.log('await getL2TransactionReceipt')
   const l2receipt = await watcher.getL2TransactionReceipt(l1ToL2XDomainMsgHash) as TransactionReceipt
   const l2tx = await l2Provider.getTransaction(l2receipt.transactionHash)
+
   return {
     l1tx,
     l1receipt,
@@ -80,21 +78,18 @@ const waitForDepositTypeTransaction = async (l1OriginatingTx: Promise<Transactio
   }
 }
 
-// TODO: combine thes elegantly? v^v^v
+// TODO: combine these elegantly? v^v^v
 
 const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<TransactionResponse>):Promise<CrossDomainMessagePair> => {
-  console.log('await ing l2 tx')
   const res = await l2OriginatingTx
   await res.wait()
 
   const l2tx = await l2Provider.getTransaction(res.hash)
   const l2receipt = await l2Provider.getTransactionReceipt(res.hash)
-  console.log(`l2 receipt is: ${JSON.stringify(l2receipt)}`)
-  console.log('await watcher.getMessageHashesFromL2Tx')
   const [l2ToL1XDomainMsgHash] = await watcher.getMessageHashesFromL2Tx(res.hash)
-  console.log('await getL1TransactionReceipt')
   const l1receipt = await watcher.getL1TransactionReceipt(l2ToL1XDomainMsgHash) as TransactionReceipt
   const l1tx = await l1Provider.getTransaction(l1receipt.transactionHash)
+
   return {
     l2tx,
     l2receipt,
@@ -106,18 +101,6 @@ const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<Transac
 describe.only('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract 
   let OVM_ETH: Contract
-
-  const logBalances = async (description: string = '') => {
-    console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ' + description + ' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-      // const l1UserBalance = await l1Provider.send('eth_getBalance', [l1Wallet.address])
-      // console.log('L1 balance of l1 wallet ', l1Wallet.address, 'is', l1UserBalance.toString(10))
-      // const l1GatewayBalance = await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
-      // console.log('L1 balance of l1 gateway ', OVM_L1ETHGateway.address, 'is', l1GatewayBalance.toString())
-      // const l2Balance = await OVM_ETH.balanceOf(l2Wallet.address)
-      // console.log('L2 balance of l2 wallet ', l2Wallet.address, 'is', l2Balance.toString())\
-    console.log(await getBalances())
-    console.log('~'.repeat(description.length) + '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-  }
 
   const getBalances = async ():
     Promise<{
@@ -158,11 +141,8 @@ describe.only('Native ETH Integration Tests', async () => {
   it('deposit', async () => {
     const depositAmount = 10
 
-    console.log('getting preBalances...')
     const preBalances = await getBalances()
-    console.log(`got prebalances, they are: ${JSON.stringify(preBalances)}`)
 
-    console.log('sending deposit TX...')
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
@@ -172,13 +152,10 @@ describe.only('Native ETH Integration Tests', async () => {
     )
     const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice) // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
 
-    console.log('now getting postBalances')
     const postBalances = await getBalances()
-    console.log(`got post-balances, they are: ${JSON.stringify(postBalances)}`)
 
     expect(postBalances.l1GatewayBalance).to.deep.eq(preBalances.l1GatewayBalance.add(depositAmount))
     expect(postBalances.l2UserBalance).to.deep.eq(preBalances.l2UserBalance.add(depositAmount))
-
     expect(postBalances.l1UserBalance).to.deep.eq(
       preBalances.l1UserBalance.sub(
         l1FeePaid.add(depositAmount)
@@ -186,16 +163,22 @@ describe.only('Native ETH Integration Tests', async () => {
     )
   })
 
-  it.only('withdraw', async () => {
+  it('withdraw', async () => {
     const withdrawAmount = 3
 
     const preBalances = await getBalances()
-    console.log('got prebalances')
-    expect(preBalances.l2UserBalance.gt(0), 'it-scoped test cannot be run without a preceeding deposit')
 
-    await waitForWithdrawalTypeTransaction(
+    expect(preBalances.l2UserBalance.gt(0), 'Cannot run withdrawal test before any deposits...')
+
+    const withdrawalReceipts = await waitForWithdrawalTypeTransaction(
       OVM_ETH.withdraw(withdrawAmount)
     )
+
+    const postBalances = await getBalances()
+
+    expect(postBalances.l1GatewayBalance).to.deep.eq(preBalances.l1GatewayBalance.sub(withdrawAmount))
+    expect(postBalances.l2UserBalance).to.deep.eq(preBalances.l2UserBalance.sub(withdrawAmount))
+    expect(postBalances.l1UserBalance).to.deep.eq(preBalances.l1UserBalance.add(withdrawAmount))
 
   })
 })
