@@ -43,6 +43,10 @@ export class Config {
     return process.env.L2_NODE_WEB3_URL
   }
 
+  public static SynthetixDeployerURL(): string {
+    return process.env.SYNTHETIX_DEPLOYER_URL
+  }
+
   public static Mnemonic(): string {
     return process.env.MNEMONIC || mnemonic
   }
@@ -63,6 +67,10 @@ export class Config {
 
   public static DeployerPrivateKey(): string {
     return process.env.DEPLOYER_PRIVATE_KEY
+  }
+
+  public static DeployerPrivateKey2(): string {
+    return process.env.DEPLOYER_PRIVATE_KEY_2
   }
 
   public static TargetGasLimit(): number {

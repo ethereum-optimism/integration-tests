@@ -1,0 +1,3 @@
+[submodule "packages/synthetix/synthetix"]
+	path = packages/synthetix/synthetix
+	url = git@github.com:Synthetixio/synthetix.git

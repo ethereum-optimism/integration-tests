@@ -34,7 +34,6 @@ describe('Transaction Ingestion', () => {
   const mnemonic = Config.Mnemonic()
 
   let pre
-
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
     l1Signer = new Wallet(Config.DeployerPrivateKey()).connect(l1Provider)
