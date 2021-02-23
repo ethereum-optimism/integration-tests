@@ -47,9 +47,9 @@
     "wsrun": "^3.6.4"
   },
   "dependencies": {
-    "@eth-optimism/contracts": "^0.0.2-alpha.7",
-    "@eth-optimism/watcher": "0.0.1-alpha.6",
+    "@eth-optimism/contracts": "^0.1.9",
     "@eth-optimism/solc": "^0.5.16-alpha.6",
+    "@eth-optimism/watcher": "0.0.1-alpha.6",
     "@ethersproject/providers": "^5.0.7",
     "bignumber.js": "^9.0.0",
     "chai-bignumber": "^3.0.0",
