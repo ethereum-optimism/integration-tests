@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import assert = require('assert')
-import { JsonRpcProvider, TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
+import { AlchemyProvider, JsonRpcProvider, TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
@@ -98,8 +98,9 @@ describe.only('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract 
   let OVM_ETH: Contract
 
-  let l1bob: Wallet
-  let l2bob: Wallet
+  let l1Bob: Wallet
+  let l2Bob: Wallet
+  let l1Alice: Wallet
 
   const getBalances = async ():
     Promise<{
@@ -108,16 +109,20 @@ describe.only('Native ETH Integration Tests', async () => {
       l1GatewayBalance: BigNumber,
       sequencerBalance: BigNumber,
       l1BobBalance: BigNumber,
-      l2BobBalance: BigNumber
+      l2BobBalance: BigNumber,
+      l1AliceBalance: BigNumber
     }> => {
       const l1UserBalance = BigNumber.from(
         await l1Provider.send('eth_getBalance', [l1Wallet.address])
       )
       const l1BobBalance = BigNumber.from(
-        await l1Provider.send('eth_getBalance', [l1bob.address])
+        await l1Provider.send('eth_getBalance', [l1Bob.address])
+      )
+      const l1AliceBalance = BigNumber.from(
+        await l1Provider.send('eth_getBalance', [l1Bob.address])
       )
       const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
-      const l2BobBalance = await OVM_ETH.balanceOf(l2bob.address)
+      const l2BobBalance = await OVM_ETH.balanceOf(l2Bob.address)
       const sequencerBalance = await OVM_ETH.balanceOf(PROXY_SEQUENCER_ENTRYPOINT_ADDRESS)
       const l1GatewayBalance = BigNumber.from(
         await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
@@ -127,6 +132,7 @@ describe.only('Native ETH Integration Tests', async () => {
         l2UserBalance,
         l1BobBalance,
         l2BobBalance,
+        l1AliceBalance,
         l1GatewayBalance,
         sequencerBalance
       }
@@ -135,9 +141,11 @@ describe.only('Native ETH Integration Tests', async () => {
 
   before(async () => {
     const BOB_PRIV_KEY = '0x1234123412341234123412341234123412341234123412341234123412341234'
-    l1bob = new Wallet(BOB_PRIV_KEY, l1Provider)
-    l2bob = new Wallet(BOB_PRIV_KEY, l2Provider)
+    l1Bob = new Wallet(BOB_PRIV_KEY, l1Provider)
+    l2Bob = new Wallet(BOB_PRIV_KEY, l2Provider)
     
+    const ALICE_PRIV_KEY = '0x4321432143214321432143214321432143214321432143214321432143214321'
+    l1Alice = new Wallet(ALICE_PRIV_KEY, l1Provider)
     watcher = await initWatcher()
     
     OVM_L1ETHGateway = new Contract(
@@ -180,12 +188,12 @@ describe.only('Native ETH Integration Tests', async () => {
 
   it('depositTo', async () => {
     const depositAmount = 10
-
     const preBalances = await getBalances()
+    await l1Provider.send('eth_getBalance', [l1Wallet.address])
 
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.depositTo(
-        l2bob.address,
+        l2Bob.address,
         {
           value: depositAmount,
           gasLimit: '0x100000',
@@ -234,7 +242,7 @@ describe.only('Native ETH Integration Tests', async () => {
 
     const withdrawalReceipts = await waitForWithdrawalTypeTransaction(
       OVM_ETH.withdrawTo(
-        l1bob.address,
+        l1Bob.address,
         withdrawAmount
       )
     )
@@ -246,7 +254,7 @@ describe.only('Native ETH Integration Tests', async () => {
     expect(postBalances.l1BobBalance).to.deep.eq(preBalances.l1BobBalance.add(withdrawAmount))
   })
 
-  it('deposit, transfer, withdraw', async () => {
+  it('Round trip test: deposit, transfer, withdraw', async () => {
     const roundTripAmount = 3
 
     const preBalances = await getBalances()
@@ -259,11 +267,11 @@ describe.only('Native ETH Integration Tests', async () => {
       })
     )
 
-    await OVM_ETH.transfer(l2bob.address, roundTripAmount)
+    await OVM_ETH.transfer(l2Bob.address, roundTripAmount)
 
     const withdrawalReceipts = await waitForWithdrawalTypeTransaction(
       await OVM_ETH
-        .connect(l2bob)
+        .connect(l2Bob)
         .withdraw(
           roundTripAmount
         )
@@ -273,4 +281,35 @@ describe.only('Native ETH Integration Tests', async () => {
 
     expect(postBalances.l1BobBalance).to.deep.eq(preBalances.l1BobBalance.add(roundTripAmount))
   })
+
+  it.only('Round trip test: depositTo, withdrawTo', async () => {
+    const roundTripAmount = 7
+
+    const preBalances = await getBalances()
+    const depositReceipts = await waitForDepositTypeTransaction(
+      await OVM_L1ETHGateway.depositTo(
+        l2Bob.address,
+        {
+        value: roundTripAmount,
+        gasLimit: '0x100000',
+        gasPrice: 0
+      })
+    )
+  
+    // this transfer doesn't seem to be working... 
+    const withdrawalReceipts = await waitForWithdrawalTypeTransaction(
+      await OVM_ETH
+        .connect(l2Bob)
+        .withdrawTo(
+          l1Alice.address,
+          roundTripAmount
+        )
+    )
+
+    const postBalances = await getBalances()
+    
+    expect(postBalances.l1AliceBalance).to.deep.eq(preBalances.l1AliceBalance.add(roundTripAmount))
+  })
+
+
 })
