@@ -94,7 +94,7 @@ const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<Transac
   }
 }
 
-describe.only('Native ETH Integration Tests', async () => {
+describe('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract 
   let OVM_ETH: Contract
 
@@ -282,7 +282,7 @@ describe.only('Native ETH Integration Tests', async () => {
     expect(postBalances.l1BobBalance).to.deep.eq(preBalances.l1BobBalance.add(roundTripAmount))
   })
 
-  it.only('Round trip test: depositTo, withdrawTo', async () => {
+  it('Round trip test: depositTo, withdrawTo', async () => {
     const roundTripAmount = 7
 
     const preBalances = await getBalances()
