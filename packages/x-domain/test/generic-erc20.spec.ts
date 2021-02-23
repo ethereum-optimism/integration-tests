@@ -7,7 +7,7 @@ import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 
 import { BigNumber, ethers, Transaction } from 'ethers'
-import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
+import erc20Json = require('../../../contracts/build/ERC20.json')
 
 // const l1GatewayInterface = require('../temp/L1_ERC20Gateway.json').abi // getContractInterface('L1_ERC20Gateway') TODO: use this once the new npm contracts publish gives us access
 
@@ -100,7 +100,7 @@ const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<Transac
   }
 }
 
-describe.skip('Basic ERC20 Integration Tests', async () => {
+describe('Basic ERC20 Integration Tests', async () => {
   let L1_ERC20: Contract
   let L1_ERC20Gateway: Contract 
   let L2_DEPOSITED_ERC20: Contract
@@ -162,6 +162,10 @@ describe.skip('Basic ERC20 Integration Tests', async () => {
       'tst'
     )
 
+    console.log(L1_ERC20.address,
+      L2_DEPOSITED_ERC20.address,
+      await AddressManager.getAddress('OVM_L1CrossDomainMessenger'));
+    
     L1_ERC20Gateway = await (
       await getContractFactory('OVM_L1ERC20Gateway', l1Wallet, false)
     ).deploy(
@@ -173,25 +177,40 @@ describe.skip('Basic ERC20 Integration Tests', async () => {
     await L2_DEPOSITED_ERC20.init(L1_ERC20Gateway.address)
   })
 
-  it('deposit', async () => {
+  it.only('deposit', async () => {
     const preBalances = await getBalances()
     
     const depositAmount = 10
     console.log(1);
   
-    await L1_ERC20.approve(L1_ERC20Gateway.address, depositAmount)
+    await L1_ERC20.approve(L1_ERC20Gateway.address, 200) // larger spending amount than needed.
+    await L1_ERC20.approve(l1Bob.address, 200) // larger spending amount than needed.
     console.log(2);
+    await L1_ERC20.transfer(l1Bob.address, 20, {
+      gasLimit: '0x100000',
+      gasPrice: 0
+    })
+    let bobConnected = L1_ERC20.connect(l1Bob)
+    await L1_ERC20.connect(l1Bob).transferFrom(l1Wallet.address, l1Bob.address, 20, {
+      from: l1Bob.address,
+      gasLimit: '0x100000',
+      gasPrice: 0
+    })
+    console.log(2.1);
     
-    console.log(await L1_ERC20.allowance(l1Wallet.address, L1_ERC20Gateway.address));
+    console.log((await L1_ERC20.allowance(l1Wallet.address, L1_ERC20Gateway.address)).toNumber());
     console.log(3);
-    
-    console.log(L1_ERC20Gateway);
-    
+    // console.log(L1_ERC20Gateway)
+    console.log(await L1_ERC20Gateway.deposit(depositAmount, {
+      gasLimit: '0x100000',
+      gasPrice: 0
+    }))
+    console.log(4);
     const depositReceipts = await waitForDepositTypeTransaction(
-      L1_ERC20Gateway.deposit(
-        depositAmount,
+      L1_ERC20Gateway.deposit(depositAmount, 
         {
-          gasLimit: '0x100000',
+          from: l1Wallet.address,
+          gasLimit: '0xffffff000000',
           gasPrice: 0
         }
       )
