@@ -66,7 +66,7 @@ export class Config {
   }
 
   public static TargetGasLimit(): number {
-    const targetGasLimit = process.env.TARGET_GAS_LIMIT || '8000000'
+    const targetGasLimit = process.env.TARGET_GAS_LIMIT || '9000000'
     return parseInt(targetGasLimit, 10)
   }
 
