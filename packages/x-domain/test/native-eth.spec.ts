@@ -6,13 +6,10 @@ import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 
-import { BigNumber, ethers, Transaction } from 'ethers'
+import { BigNumber, Contract, Transaction, Wallet } from 'ethers'
 
 const l1GatewayInterface = getContractInterface('OVM_L1ETHGateway')
 
-import {
-  Contract, ContractFactory, Wallet,
-} from 'ethers'
 import { Signer } from 'crypto'
 
 let l1MessengerAddress
@@ -50,14 +47,16 @@ const initWatcher = async () => {
   })
 }
 
-type CrossDomainMessagePair = {
+interface CrossDomainMessagePair {
   l1tx: Transaction,
   l1receipt: TransactionReceipt,
-  l2tx: Transaction, 
+  l2tx: Transaction,
   l2receipt: TransactionReceipt
 }
 
-const waitForDepositTypeTransaction = async (l1OriginatingTx: Promise<TransactionResponse>):Promise<CrossDomainMessagePair> => {
+const waitForDepositTypeTransaction = async (
+  l1OriginatingTx: Promise<TransactionResponse>
+): Promise<CrossDomainMessagePair> => {
   const res = await l1OriginatingTx
   await res.wait()
 
@@ -76,7 +75,9 @@ const waitForDepositTypeTransaction = async (l1OriginatingTx: Promise<Transactio
 }
 
 // TODO: combine these elegantly? v^v^v
-const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<TransactionResponse>):Promise<CrossDomainMessagePair> => {
+const waitForWithdrawalTypeTransaction = async (
+  l2OriginatingTx: Promise<TransactionResponse>
+): Promise<CrossDomainMessagePair> => {
   const res = await l2OriginatingTx
   await res.wait()
 
@@ -94,8 +95,8 @@ const waitForWithdrawalTypeTransaction = async (l2OriginatingTx: Promise<Transac
   }
 }
 
-describe.only('Native ETH Integration Tests', async () => {
-  let OVM_L1ETHGateway: Contract 
+describe('Native ETH Integration Tests', async () => {
+  let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
   let l1bob: Wallet
@@ -131,15 +132,14 @@ describe.only('Native ETH Integration Tests', async () => {
         sequencerBalance
       }
     }
-  
 
   before(async () => {
     const BOB_PRIV_KEY = '0x1234123412341234123412341234123412341234123412341234123412341234'
     l1bob = new Wallet(BOB_PRIV_KEY, l1Provider)
     l2bob = new Wallet(BOB_PRIV_KEY, l2Provider)
-    
+
     watcher = await initWatcher()
-    
+
     OVM_L1ETHGateway = new Contract(
       await AddressManager.getAddress('OVM_L1ETHGateway'),
       l1GatewayInterface,
@@ -165,7 +165,9 @@ describe.only('Native ETH Integration Tests', async () => {
         gasPrice: 0
       })
     )
-    const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice) // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
+
+    // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
+    const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice)
 
     const postBalances = await getBalances()
 
@@ -193,7 +195,9 @@ describe.only('Native ETH Integration Tests', async () => {
         }
       )
     )
-    const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice) // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
+
+    // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
+    const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice)
 
     const postBalances = await getBalances()
 
