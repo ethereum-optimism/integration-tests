@@ -48,9 +48,9 @@ describe('Native ETH Integration Tests', async () => {
 
   before(async () => {
     const system = await getEnvironment()
-    l1Provider = system.l1Provider 
+    l1Provider = system.l1Provider
     l2Provider = system.l2Provider
-    l1Wallet = system.l1Wallet,
+    l1Wallet = system.l1Wallet
     l2Wallet = system.l2Wallet
     AddressManager = system.AddressManager
     watcher = system.watcher
@@ -85,7 +85,7 @@ describe('Native ETH Integration Tests', async () => {
 
     const gasPrice = BigNumber.from(1_000_000)
     const gasLimit = BigNumber.from(5_000_000)
-    
+
     // transfer with 0 value to easily pay a gas fee
     const res: TransactionResponse = await OVM_ETH.transfer(
       '0x1234123412341234123412341234123412341234',
@@ -114,7 +114,7 @@ describe('Native ETH Integration Tests', async () => {
     ).to.be.true
   })
 
-  it('attempting to send a transaction with a non-multiple-of-1M gasPrice is correctly rejected by the sequencer', async () => {
+  it('sequencer rejects transaction with a non-multiple-of-1M gasPrice', async () => {
     const gasPrice = BigNumber.from(1_000_000 - 1)
     const gasLimit = BigNumber.from('0x100000')
 
@@ -133,7 +133,7 @@ describe('Native ETH Integration Tests', async () => {
       err = e.body
     }
 
-    if (err == undefined) {
+    if (err === undefined) {
       throw new Error('Transaction did not throw as expected')
     }
 

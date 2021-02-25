@@ -59,9 +59,9 @@ describe('Native ETH Integration Tests', async () => {
 
   before(async () => {
     const system = await getEnvironment()
-    l1Provider = system.l1Provider 
+    l1Provider = system.l1Provider
     l2Provider = system.l2Provider
-    l1Wallet = system.l1Wallet,
+    l1Wallet = system.l1Wallet
     l2Wallet = system.l2Wallet
     AddressManager = system.AddressManager
     watcher = system.watcher
