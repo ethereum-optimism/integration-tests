@@ -1,10 +1,9 @@
 import { expect } from 'chai'
 import assert = require('assert')
-import { JsonRpcProvider, TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
-import { BigNumber, Contract, Transaction, Wallet } from 'ethers'
-import { Config } from '../../../common'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { BigNumber, Contract, Wallet } from 'ethers'
+import { getContractInterface } from '@eth-optimism/contracts'
 import { Watcher } from '@eth-optimism/watcher'
-import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 
 import { getEnvironment, waitForDepositTypeTransaction, waitForWithdrawalTypeTransaction } from '../helpers'
 
@@ -20,7 +19,7 @@ let l2Wallet: Wallet
 let AddressManager: Contract
 let watcher: Watcher
 
-describe.only('Native ETH Integration Tests', async () => {
+describe('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
