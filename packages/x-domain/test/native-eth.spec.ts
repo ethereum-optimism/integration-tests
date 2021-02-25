@@ -88,17 +88,18 @@ describe('Native ETH Integration Tests', async () => {
 
     const preBalances = await getBalances()
 
+    const gasPrice = 1
+    const gasLimit = '0x100000' 
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
-        gasLimit: '0x100000',
-        gasPrice: 0
+        gasLimit,
+        gasPrice
       }),
       watcher, l1Provider, l2Provider
     )
 
-    // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
-    const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice)
+    const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(gasPrice)
 
     const postBalances = await getBalances()
 
@@ -116,19 +117,20 @@ describe('Native ETH Integration Tests', async () => {
 
     const preBalances = await getBalances()
 
+    const gasPrice = 1
+    const gasLimit = '0x100000' 
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.depositTo(
         l2bob.address,
         {
           value: depositAmount,
-          gasLimit: '0x100000',
-          gasPrice: 0
+          gasLimit,
+          gasPrice
         }
       ),
       watcher, l1Provider, l2Provider
     )
 
-    // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
     const l1FeePaid = depositReceipts.l1receipt.gasUsed.mul(depositReceipts.l1tx.gasPrice)
 
     const postBalances = await getBalances()

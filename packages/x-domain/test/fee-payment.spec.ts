@@ -19,7 +19,7 @@ let l2Wallet: Wallet
 let AddressManager: Contract
 let watcher: Watcher
 
-describe('Native ETH Integration Tests', async () => {
+describe('Fee Payment Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
