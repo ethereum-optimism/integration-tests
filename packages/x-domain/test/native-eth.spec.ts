@@ -1,101 +1,26 @@
 import { expect } from 'chai'
 import assert = require('assert')
 import { JsonRpcProvider, TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
-
+import { BigNumber, Contract, Transaction, Wallet } from 'ethers'
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
 
-import { BigNumber, Contract, Transaction, Wallet } from 'ethers'
+import { getEnvironment, waitForDepositTypeTransaction, waitForWithdrawalTypeTransaction } from '../helpers'
 
 const l1GatewayInterface = getContractInterface('OVM_L1ETHGateway')
-
-import { Signer } from 'crypto'
-
-let l1MessengerAddress
-let l2MessengerAddress
-const L1_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
-const L2_USER_PRIVATE_KEY = Config.DeployerPrivateKey()
-
-const goerliURL = Config.L1NodeUrlWithPort()
-const optimismURL = Config.L2NodeUrlWithPort()
-const l1Provider = new JsonRpcProvider(goerliURL)
-const l2Provider = new JsonRpcProvider(optimismURL)
-const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
-const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-
-const addressManagerAddress = Config.AddressResolverAddress()
-const addressManagerInterface = getContractInterface('Lib_AddressManager')
-const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
 
 const OVM_ETH_ADDRESS = '0x4200000000000000000000000000000000000006'
 const PROXY_SEQUENCER_ENTRYPOINT_ADDRESS = '0x4200000000000000000000000000000000000004'
 
-let watcher
-const initWatcher = async () => {
-  l1MessengerAddress = await AddressManager.getAddress('Proxy__OVM_L1CrossDomainMessenger')
-  l2MessengerAddress = await AddressManager.getAddress('OVM_L2CrossDomainMessenger')
-  return new Watcher({
-    l1: {
-      provider: l1Provider,
-      messengerAddress: l1MessengerAddress
-    },
-    l2: {
-      provider: l2Provider,
-      messengerAddress: l2MessengerAddress
-    }
-  })
-}
+let l1Provider: JsonRpcProvider
+let l2Provider: JsonRpcProvider
+let l1Wallet: Wallet
+let l2Wallet: Wallet
+let AddressManager: Contract
+let watcher: Watcher
 
-interface CrossDomainMessagePair {
-  l1tx: Transaction,
-  l1receipt: TransactionReceipt,
-  l2tx: Transaction,
-  l2receipt: TransactionReceipt
-}
-
-const waitForDepositTypeTransaction = async (
-  l1OriginatingTx: Promise<TransactionResponse>
-): Promise<CrossDomainMessagePair> => {
-  const res = await l1OriginatingTx
-  await res.wait()
-
-  const l1tx = await l1Provider.getTransaction(res.hash)
-  const l1receipt = await l1Provider.getTransactionReceipt(res.hash)
-  const [l1ToL2XDomainMsgHash] = await watcher.getMessageHashesFromL1Tx(res.hash)
-  const l2receipt = await watcher.getL2TransactionReceipt(l1ToL2XDomainMsgHash) as TransactionReceipt
-  const l2tx = await l2Provider.getTransaction(l2receipt.transactionHash)
-
-  return {
-    l1tx,
-    l1receipt,
-    l2tx,
-    l2receipt
-  }
-}
-
-// TODO: combine these elegantly? v^v^v
-const waitForWithdrawalTypeTransaction = async (
-  l2OriginatingTx: Promise<TransactionResponse>
-): Promise<CrossDomainMessagePair> => {
-  const res = await l2OriginatingTx
-  await res.wait()
-
-  const l2tx = await l2Provider.getTransaction(res.hash)
-  const l2receipt = await l2Provider.getTransactionReceipt(res.hash)
-  const [l2ToL1XDomainMsgHash] = await watcher.getMessageHashesFromL2Tx(res.hash)
-  const l1receipt = await watcher.getL1TransactionReceipt(l2ToL1XDomainMsgHash) as TransactionReceipt
-  const l1tx = await l1Provider.getTransaction(l1receipt.transactionHash)
-
-  return {
-    l2tx,
-    l2receipt,
-    l1tx,
-    l1receipt
-  }
-}
-
-describe('Native ETH Integration Tests', async () => {
+describe.only('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
@@ -134,11 +59,17 @@ describe('Native ETH Integration Tests', async () => {
     }
 
   before(async () => {
+    const system = await getEnvironment()
+    l1Provider = system.l1Provider 
+    l2Provider = system.l2Provider
+    l1Wallet = system.l1Wallet,
+    l2Wallet = system.l2Wallet
+    AddressManager = system.AddressManager
+    watcher = system.watcher
+
     const BOB_PRIV_KEY = '0x1234123412341234123412341234123412341234123412341234123412341234'
     l1bob = new Wallet(BOB_PRIV_KEY, l1Provider)
     l2bob = new Wallet(BOB_PRIV_KEY, l2Provider)
-
-    watcher = await initWatcher()
 
     OVM_L1ETHGateway = new Contract(
       await AddressManager.getAddress('OVM_L1ETHGateway'),
@@ -163,7 +94,8 @@ describe('Native ETH Integration Tests', async () => {
         value: depositAmount,
         gasLimit: '0x100000',
         gasPrice: 0
-      })
+      }),
+      watcher, l1Provider, l2Provider
     )
 
     // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
@@ -193,7 +125,8 @@ describe('Native ETH Integration Tests', async () => {
           gasLimit: '0x100000',
           gasPrice: 0
         }
-      )
+      ),
+      watcher, l1Provider, l2Provider
     )
 
     // TODO: this is broken for nonzero l1 gas price... what part of the calc is off?
@@ -218,7 +151,8 @@ describe('Native ETH Integration Tests', async () => {
     expect(preBalances.l2UserBalance.gt(0), 'Cannot run withdrawal test before any deposits...')
 
     const withdrawalReceipts = await waitForWithdrawalTypeTransaction(
-      OVM_ETH.withdraw(withdrawAmount)
+      OVM_ETH.withdraw(withdrawAmount, { gasPrice: 0 }),
+      watcher, l1Provider, l2Provider
     )
 
     const postBalances = await getBalances()
@@ -239,8 +173,10 @@ describe('Native ETH Integration Tests', async () => {
     const withdrawalReceipts = await waitForWithdrawalTypeTransaction(
       OVM_ETH.withdrawTo(
         l1bob.address,
-        withdrawAmount
-      )
+        withdrawAmount,
+        { gasPrice: 0 }
+      ),
+      watcher, l1Provider, l2Provider
     )
 
     const postBalances = await getBalances()
@@ -260,7 +196,8 @@ describe('Native ETH Integration Tests', async () => {
         value: roundTripAmount,
         gasLimit: '0x100000',
         gasPrice: 0
-      })
+      }),
+      watcher, l1Provider, l2Provider
     )
 
     await OVM_ETH.transfer(l2bob.address, roundTripAmount)
@@ -269,8 +206,10 @@ describe('Native ETH Integration Tests', async () => {
       await OVM_ETH
         .connect(l2bob)
         .withdraw(
-          roundTripAmount
-        )
+          roundTripAmount,
+          { gasPrice: 0 }
+        ),
+        watcher, l1Provider, l2Provider
     )
 
     const postBalances = await getBalances()
