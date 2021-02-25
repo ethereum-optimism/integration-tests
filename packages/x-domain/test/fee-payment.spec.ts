@@ -19,7 +19,7 @@ let l2Wallet: Wallet
 let AddressManager: Contract
 let watcher: Watcher
 
-describe.only('Native ETH Integration Tests', async () => {
+describe('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
@@ -70,7 +70,6 @@ describe.only('Native ETH Integration Tests', async () => {
 
   beforeEach(async () => {
     const depositAmount = utils.parseEther('1')
-    
     await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
@@ -81,11 +80,11 @@ describe.only('Native ETH Integration Tests', async () => {
     )
   })
 
-  it('Paying a nonzero gasPrice fee', async () => {
+  it('Paying a nonzero but acceptable gasPrice fee', async () => {
     const preBalances = await getBalances()
 
     const gasPrice = BigNumber.from(1_000_000)
-    const gasLimit = BigNumber.from('0x100000')
+    const gasLimit = BigNumber.from(5_000_000)
     
     // transfer with 0 value to easily pay a gas fee
     const res: TransactionResponse = await OVM_ETH.transfer(
@@ -112,6 +111,34 @@ describe.only('Native ETH Integration Tests', async () => {
         eq(
           gasLimit.mul(gasPrice)
         )
+    ).to.be.true
+  })
+
+  it('attempting to send a transaction with a non-multiple-of-1M gasPrice is correctly rejected by the sequencer', async () => {
+    const gasPrice = BigNumber.from(1_000_000 - 1)
+    const gasLimit = BigNumber.from('0x100000')
+
+    let err: string
+    try {
+      const res = await OVM_ETH.transfer(
+        '0x1234123412341234123412341234123412341234',
+        0,
+        {
+          gasPrice,
+          gasLimit
+        }
+      )
+      await res.wait()
+    } catch (e) {
+      err = e.body
+    }
+
+    if (err == undefined) {
+      throw new Error('Transaction did not throw as expected')
+    }
+
+    expect(
+      err.includes('Gas price must be a multiple of 1,000,000 wei')
     ).to.be.true
   })
 })
