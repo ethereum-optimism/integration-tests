@@ -89,7 +89,7 @@ describe('Native ETH Integration Tests', async () => {
     const preBalances = await getBalances()
 
     const gasPrice = 1
-    const gasLimit = '0x100000' 
+    const gasLimit = '0x100000'
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
@@ -118,7 +118,7 @@ describe('Native ETH Integration Tests', async () => {
     const preBalances = await getBalances()
 
     const gasPrice = 1
-    const gasLimit = '0x100000' 
+    const gasLimit = '0x100000'
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.depositTo(
         l2bob.address,
