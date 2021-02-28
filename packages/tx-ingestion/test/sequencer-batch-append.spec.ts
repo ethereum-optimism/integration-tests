@@ -6,7 +6,7 @@
 
 import { Config, etherbase, sleep } from '../../../common'
 import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
-import { ganache } from '@eth-optimism/ovm-toolchain'
+import ganache from 'ganache-core'
 import { OptimismProvider } from '@eth-optimism/provider'
 import { deployContract } from 'ethereum-waffle'
 import assert = require('assert')
