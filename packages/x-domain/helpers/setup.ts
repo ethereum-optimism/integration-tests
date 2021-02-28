@@ -14,6 +14,18 @@ export const getEnvironment = async (): Promise<{
     AddressManager: Contract,
     watcher: Watcher
 }> => {
+    if (Config.L1NodeUrlWithPort() === undefined) {
+      throw new Error('L1_NODE_WEB3_URL is undefined')
+    }
+    if (Config.L2NodeUrlWithPort() === undefined) {
+      throw new Error('L2_NODE_WEB3_URL is undefined')
+    }
+    if (Config.DeployerPrivateKey() === undefined) {
+      throw new Error('DEPLOYER_PRIVATE_KEY is undefined')
+    }
+    if (Config.AddressResolverAddress() === undefined) {
+      throw new Error('ETH1_ADDRESS_RESOLVER_ADDRESS is undefined')
+    }
     const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
     const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
     const l1Wallet = new Wallet(Config.DeployerPrivateKey(), l1Provider)
