@@ -6,7 +6,7 @@
 
 import { Config, sleep } from '../../../common'
 import { Web3Provider } from '@ethersproject/providers'
-import { ganache } from '@eth-optimism/ovm-toolchain'
+import { ganache } from '@eth-optimism/plugins/ganache'
 import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
 import { verifyMessage } from '@ethersproject/wallet'
 import { computeAddress, parse } from '@ethersproject/transactions'
