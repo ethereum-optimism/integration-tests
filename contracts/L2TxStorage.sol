@@ -18,4 +18,8 @@ contract L2TxStorage {
             })
         );
     }
+
+    function numTxs() public view returns(uint count) {
+        return l2Txs.length;
+    }
 }

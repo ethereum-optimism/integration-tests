@@ -53,6 +53,18 @@ export class Config {
     return process.env.ETH1_ADDRESS_RESOLVER_ADDRESS
   }
 
+  public static L2DepositTrackerAddress(): string {
+    return process.env.L2_DEPOSIT_TRACKER_ADDRESS
+  }
+
+  public static L1DepositIntiatorAddress(): string {
+    return process.env.L1_DEPOSIT_INITIATOR_ADDRESS
+  }
+
+  public static L2TxStorageAddress(): string {
+    return process.env.L2_TX_STORAGE_ADDRESS
+  }
+
   public static SequencerPrivateKey(): string {
     return process.env.SEQUENCER_PRIVATE_KEY
   }

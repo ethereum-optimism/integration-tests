@@ -63,7 +63,7 @@ describe('Queue Origin Sequencer Transactions', () => {
     l2TxStorage = await deployContract(signer, L2TxStorage)
     assert((await provider.getCode(l2TxStorage.address)).length > 2, 'no L2 Tx storage code stored')
   })
-  it.only('should process many transactions correctly', async () => {
+  it('should process many transactions correctly', async () => {
     const numTxsToSend = 1000
     for (let i=0; i < numTxsToSend; i++) {
       console.log('sending tx', i)
