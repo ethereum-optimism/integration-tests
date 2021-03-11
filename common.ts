@@ -54,6 +54,19 @@ export class Config {
   }
 
   /* Contracts */
+
+  public static L2DepositTrackerAddress(): string {
+    return process.env.L2_DEPOSIT_TRACKER_ADDRESS
+  }
+
+  public static L1DepositIntiatorAddress(): string {
+    return process.env.L1_DEPOSIT_INITIATOR_ADDRESS
+  }
+
+  public static L2TxStorageAddress(): string {
+    return process.env.L2_TX_STORAGE_ADDRESS
+  }
+
   // TODO: this is the address manager
   public static AddressResolverAddress(): string {
     if (process.env.ETH1_ADDRESS_RESOLVER_ADDRESS === undefined) {
@@ -81,7 +94,7 @@ export class Config {
   }
 
   public static TargetGasLimit(): number {
-    const targetGasLimit = process.env.TARGET_GAS_LIMIT || '8000000'
+    const targetGasLimit = process.env.TARGET_GAS_LIMIT || '9000000'
     return parseInt(targetGasLimit, 10)
   }
 
