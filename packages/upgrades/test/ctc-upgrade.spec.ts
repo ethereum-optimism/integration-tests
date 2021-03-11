@@ -11,7 +11,7 @@ import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
 import { add0x } from '@eth-optimism/core-utils'
 import { getContractFactory } from '@eth-optimism/contracts'
-// import { L1DataTransportClient } from '@eth-optimism/data-transport-layer'
+import { L1DataTransportClient } from '@eth-optimism/data-transport-layer'
 import assert = require('assert')
 import {
   deploySpamContracts,
@@ -29,7 +29,7 @@ describe('CTC upgrade', () => {
   let l2Signer
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
-  // const dtlClient =  new L1DataTransportClient('http://data_transport_layer:7878')
+  const dtlClient =  new L1DataTransportClient('http://localhost:7878')
 
   let canonicalTransactionChain: Contract
   let newCanonicalTransactionChain: Contract
@@ -44,6 +44,9 @@ describe('CTC upgrade', () => {
   let l2DepositTracker
   let l1DepositInitiator
   let l2TxStorage
+  let latestDTLTxIndex
+  let startingNumElements
+  let startingNumQueued
 
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
@@ -80,6 +83,13 @@ describe('CTC upgrade', () => {
       l1DepositInitiator,
       l2TxStorage,
     } = await deploySpamContracts(l1Signer, l2Signer))
+    console.log('deployed all contracts, sleeping for 30 seconds')
+    await sleep(1000 * 30)
+    const latestDTLTx = await dtlClient.getLatestTransacton()
+    latestDTLTxIndex = latestDTLTx.transaction.index
+    console.log('latest dtl tx index:', latestDTLTxIndex)
+    startingNumElements = await newCanonicalTransactionChain.getTotalElements()
+    startingNumQueued = await newCanonicalTransactionChain.getQueueLength()
   })
 
   // The transactions are enqueue'd with a `to` address of i.repeat(40)
@@ -131,6 +141,7 @@ describe('CTC upgrade', () => {
       ]
       await Promise.all(tasks)
       console.log('done sending txs, sleeping for 2 minutes...')
+      await sleep(1000 * 60 * 2)
     }).timeout(0)
 
     it('should verify deposits and L2 transactions', async () => {
@@ -148,21 +159,22 @@ describe('CTC upgrade', () => {
     }).timeout(0)
 
     it('should have batch submitted all transactions', async () => {
-      const numOldElements = await canonicalTransactionChain.getTotalElements()
-      const numNewElements = await newCanonicalTransactionChain.getTotalElements()
-      const numOldQueued = await newCanonicalTransactionChain.getQueueLength()
-      const numNewQueued = await newCanonicalTransactionChain.getQueueLength()
-      console.log(
-        'old new old new',
-        numOldElements,
-        numNewElements,
-        numOldQueued,
-        numNewQueued
-      )
+      const numElements = await newCanonicalTransactionChain.getTotalElements()
+      const numQueued = await newCanonicalTransactionChain.getQueueLength()
+      expect(numElements.toNumber()).to.equal(startingNumElements + 50)
+      expect(numQueued.toNumber()).to.equal(startingNumQueued + 20)
     }).timeout(0)
 
-    it('should have picked up all transactions in DTL', async () => {}).timeout(
-      0
-    )
+    it('should have picked up all transactions in DTL', async () => {
+      const latestDTLTx = await dtlClient.getLatestTransacton()
+      expect(latestDTLTx.transaction.index).to.equal(latestDTLTxIndex + 50)
+    }).timeout(0)
+
+    // it('should not be able to enqueue to old CTC', async () => {
+    //   expect(l1DepositInitiator
+    //     .connect(l1Signer)
+    //     .initiateDeposit(100, ctcAddress, l2DepositTracker.address)
+    //   ).to.throw()
+    // }).timeout(0)
   })
 })
