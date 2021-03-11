@@ -1,5 +1,78 @@
 import { sleep } from '../../common'
 import { expect } from 'chai'
+import { deployContract } from 'ethereum-waffle'
+import L2DepositTracker = require('../../contracts/build-ovm/L2DepositTracker.json')
+import L1DepositInitiator = require('../../contracts/build/L1DepositInitiator.json')
+import L2TxStorage = require('../../contracts/build-ovm/L2TxStorage.json')
+import { Contract } from '@ethersproject/contracts'
+
+export const deploySpamContracts = async (
+  l1Wallet,
+  l2Wallet,
+  L2_DEPOSIT_TRACKER_ADDRESS?,
+  L1_DEPOSIT_INITIATOR_ADDRESS?,
+  L2_TX_STORAGE_ADDRESS?
+) => {
+  let l2DepositTracker
+  let l1DepositInitiator
+  let l2TxStorage
+  console.log('connected to L2 wallet at:', l2Wallet.address)
+  console.log('connected to L1 wallet at:', l1Wallet.address)
+  if (!L2_DEPOSIT_TRACKER_ADDRESS) {
+    l2DepositTracker = await deployContract(l2Wallet, L2DepositTracker)
+    console.log('l2DepositTracker address on L2:', l2DepositTracker.address)
+  } else {
+    l2DepositTracker = new Contract(
+      L2_DEPOSIT_TRACKER_ADDRESS,
+      L2DepositTracker.abi,
+      l2Wallet.provider
+    )
+    console.log(
+      'connecting to existing l2DepositTracker at',
+      L2_DEPOSIT_TRACKER_ADDRESS
+    )
+  }
+  if (!L1_DEPOSIT_INITIATOR_ADDRESS) {
+    l1DepositInitiator = await deployContract(l1Wallet, L1DepositInitiator)
+    console.log(
+      'l1DepositInitiator address on L1:',
+      l1DepositInitiator.address
+    )
+  } else {
+    l1DepositInitiator = new Contract(
+      L1_DEPOSIT_INITIATOR_ADDRESS,
+      L1DepositInitiator.abi,
+      l1Wallet.provider
+    )
+    console.log(
+      'connecting to existing l1DepositInitiator at',
+      L1_DEPOSIT_INITIATOR_ADDRESS
+    )
+  }
+  if (!L2_TX_STORAGE_ADDRESS) {
+    l2TxStorage = await deployContract(l2Wallet, L2TxStorage)
+    console.log('l2TxStorage address on L2:', l2TxStorage.address)
+  } else {
+    l2TxStorage = new Contract(
+      L2_TX_STORAGE_ADDRESS,
+      L2TxStorage.abi,
+      l2Wallet.provider
+    )
+    console.log(
+      'connecting to existing l2TxStorage at',
+      L2_TX_STORAGE_ADDRESS
+    )
+  }
+  expect(
+    (await l2Wallet.provider.getCode(l2TxStorage.address)).length > 2,
+    'no L2 Tx storage code stored'
+  )
+  return {
+    l2TxStorage,
+    l2DepositTracker,
+    l1DepositInitiator
+  }
+}
 
 export const spamL1Deposits = async (
   l1DepositInitiator,

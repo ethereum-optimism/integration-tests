@@ -6,6 +6,7 @@
 
 import { Config, sleep, poll, getL1Provider } from '../../../common'
 import {
+  deploySpamContracts,
   spamL1Deposits,
   spamL2Txs,
   verifyL1Deposits,
@@ -53,57 +54,13 @@ describe('Deposit Load Test', async () => {
   let l2TxStorage
 
   before(async () => {
-    console.log('connected to L2 wallet at:', l2Wallet.address)
-    console.log('connected to L1 wallet at:', l1Wallet.address)
-    if (!L2_DEPOSIT_TRACKER_ADDRESS) {
-      l2DepositTracker = await deployContract(l2Wallet, L2DepositTracker)
-      console.log('l2DepositTracker address on L2:', l2DepositTracker.address)
-    } else {
-      l2DepositTracker = new Contract(
-        L2_DEPOSIT_TRACKER_ADDRESS,
-        L2DepositTracker.abi,
-        l2Provider
-      )
-      console.log(
-        'connecting to existing l2DepositTracker at',
-        L2_DEPOSIT_TRACKER_ADDRESS
-      )
-    }
-    if (!L1_DEPOSIT_INITIATOR_ADDRESS) {
-      l1DepositInitiator = await deployContract(l1Wallet, L1DepositInitiator)
-      console.log(
-        'l1DepositInitiator address on L1:',
-        l1DepositInitiator.address
-      )
-    } else {
-      l1DepositInitiator = new Contract(
-        L1_DEPOSIT_INITIATOR_ADDRESS,
-        L1DepositInitiator.abi,
-        l1Provider
-      )
-      console.log(
-        'connecting to existing l1DepositInitiator at',
-        L1_DEPOSIT_INITIATOR_ADDRESS
-      )
-    }
-    if (!L2_TX_STORAGE_ADDRESS) {
-      l2TxStorage = await deployContract(l2Wallet, L2TxStorage)
-      console.log('l2TxStorage address on L2:', l2TxStorage.address)
-    } else {
-      l2TxStorage = new Contract(
-        L2_TX_STORAGE_ADDRESS,
-        L2TxStorage.abi,
-        l2Provider
-      )
-      console.log(
-        'connecting to existing l2TxStorage at',
-        L2_TX_STORAGE_ADDRESS
-      )
-    }
-    assert(
-      (await l2Provider.getCode(l2TxStorage.address)).length > 2,
-      'no L2 Tx storage code stored'
-    )
+    ({ l2DepositTracker, l1DepositInitiator, l2TxStorage } = await deploySpamContracts(
+      l1Wallet,
+      l2Wallet,
+      L2_DEPOSIT_TRACKER_ADDRESS,
+      L1_DEPOSIT_INITIATOR_ADDRESS,
+      L2_TX_STORAGE_ADDRESS
+    ))
     ctcAddress = await AddressManager.getAddress(
       'OVM_CanonicalTransactionChain'
     )
