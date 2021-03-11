@@ -59,7 +59,7 @@ const initWatcher = async () => {
   })
 }
 
-const deposit = async (amount, value) => {
+const deposit = async (value) => {
   const l1Messenger = new Contract(l1MessengerAddress, l1MessengerInterface, l1Wallet)
   const calldata = l2SimpleStorage.interface.encodeFunctionData('setValue', [value])
   const l1ToL2Tx = await l1Messenger.sendMessage(
@@ -119,7 +119,7 @@ describe('L2 SimpleStorage', async () => {
 
   it('should deposit from L1->L2', async () => {
     const value = `0x${'42'.repeat(32)}`
-    await deposit(1, value)
+    await deposit(value)
     const msgSender = await l2SimpleStorage.msgSender()
     const xDomainSender = await l2SimpleStorage.xDomainSender()
     const storageVal = await l2SimpleStorage.value()
