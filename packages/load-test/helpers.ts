@@ -34,10 +34,7 @@ export const deploySpamContracts = async (
   }
   if (!L1_DEPOSIT_INITIATOR_ADDRESS) {
     l1DepositInitiator = await deployContract(l1Wallet, L1DepositInitiator)
-    console.log(
-      'l1DepositInitiator address on L1:',
-      l1DepositInitiator.address
-    )
+    console.log('l1DepositInitiator address on L1:', l1DepositInitiator.address)
   } else {
     l1DepositInitiator = new Contract(
       L1_DEPOSIT_INITIATOR_ADDRESS,
@@ -58,10 +55,7 @@ export const deploySpamContracts = async (
       L2TxStorage.abi,
       l2Wallet.provider
     )
-    console.log(
-      'connecting to existing l2TxStorage at',
-      L2_TX_STORAGE_ADDRESS
-    )
+    console.log('connecting to existing l2TxStorage at', L2_TX_STORAGE_ADDRESS)
   }
   expect(
     (await l2Wallet.provider.getCode(l2TxStorage.address)).length > 2,
@@ -70,7 +64,7 @@ export const deploySpamContracts = async (
   return {
     l2TxStorage,
     l2DepositTracker,
-    l1DepositInitiator
+    l1DepositInitiator,
   }
 }
 
@@ -108,6 +102,7 @@ export const spamL2Txs = async (l2TxStorage, numTxsToSend, wallet) => {
         const tx = await l2TxStorage
           .connect(wallet)
           .sendTx(i, Math.round(Date.now() / 1000))
+        await tx.wait()
         console.log('sent tx', i, tx.hash)
         break
       } catch (error) {
@@ -125,7 +120,7 @@ export const verifyL2Txs = async (l2TxStorage) => {
     const getTx = await l2TxStorage.l2Txs(i)
     expect(getTx.txIndex.toNumber()).to.equal(
       i,
-      'tx sent index does not received index in storage'
+      'tx sent index does not match received index in storage'
     )
     const receivedTime = getTx.timestampReceived.toNumber()
     const sentTime = getTx.realWorldTimeSent.toNumber()

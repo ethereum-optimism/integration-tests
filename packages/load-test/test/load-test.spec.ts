@@ -54,7 +54,11 @@ describe('Deposit Load Test', async () => {
   let l2TxStorage
 
   before(async () => {
-    ({ l2DepositTracker, l1DepositInitiator, l2TxStorage } = await deploySpamContracts(
+    ;({
+      l2DepositTracker,
+      l1DepositInitiator,
+      l2TxStorage,
+    } = await deploySpamContracts(
       l1Wallet,
       l2Wallet,
       L2_DEPOSIT_TRACKER_ADDRESS,

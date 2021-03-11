@@ -4,22 +4,24 @@
  * https://github.com/ethereum-optimism
  */
 
-import { Config, sleep, poll, getL1Provider } from '../../../common'
+import { Config, sleep } from '../../../common'
 
-import {
-  Provider,
-  Web3Provider,
-  JsonRpcProvider,
-} from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
 import { add0x } from '@eth-optimism/core-utils'
-import { ganache } from '@eth-optimism/plugins/ganache'
-import { OptimismProvider } from '@eth-optimism/provider'
-import { getContractAddress } from '@ethersproject/address'
-import { computeAddress } from '@ethersproject/transactions'
 import { getContractFactory } from '@eth-optimism/contracts'
+// import { L1DataTransportClient } from '@eth-optimism/data-transport-layer'
 import assert = require('assert')
+import {
+  deploySpamContracts,
+  spamL1Deposits,
+  spamL2Txs,
+  verifyL1Deposits,
+  verifyL2Deposits,
+  verifyL2Txs,
+} from '../../load-test/helpers'
+import { expect } from 'chai'
 
 describe('CTC upgrade', () => {
   let l1Provider: JsonRpcProvider
@@ -27,6 +29,7 @@ describe('CTC upgrade', () => {
   let l2Signer
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
+  // const dtlClient =  new L1DataTransportClient('http://data_transport_layer:7878')
 
   let canonicalTransactionChain: Contract
   let newCanonicalTransactionChain: Contract
@@ -38,17 +41,15 @@ describe('CTC upgrade', () => {
   const FORCE_INCLUSION_PERIOD_BLOCKS = 600 / 12
   const MAX_GAS_LIMIT = 8_000_000
   let pre
+  let l2DepositTracker
+  let l1DepositInitiator
+  let l2TxStorage
 
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
+    l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
     l1Signer = new Wallet(Config.DeployerPrivateKey()).connect(l1Provider)
-    const web3 = new Web3Provider(
-      ganache.provider({
-        mnemonic,
-      })
-    )
-    l2Provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
-    l2Signer = await l2Provider.getSigner()
+    l2Signer = new Wallet(Config.DeployerPrivateKey()).connect(l2Provider)
 
     const addressResolverAddress = add0x(Config.AddressResolverAddress())
     const AddressResolverFactory = getContractFactory('Lib_AddressManager')
@@ -59,6 +60,7 @@ describe('CTC upgrade', () => {
     ctcAddress = await addressResolver.getAddress(
       'OVM_CanonicalTransactionChain'
     )
+    console.log('ctc at', ctcAddress)
 
     const CanonicalTransactionChainFactory = getContractFactory(
       'OVM_CanonicalTransactionChain'
@@ -73,6 +75,11 @@ describe('CTC upgrade', () => {
       FORCE_INCLUSION_PERIOD_BLOCKS,
       MAX_GAS_LIMIT
     )
+    ;({
+      l2DepositTracker,
+      l1DepositInitiator,
+      l2TxStorage,
+    } = await deploySpamContracts(l1Signer, l2Signer))
   })
 
   // The transactions are enqueue'd with a `to` address of i.repeat(40)
@@ -80,38 +87,82 @@ describe('CTC upgrade', () => {
   // way. They need to be inserted into the L2 chain in an ascending order.
   // Keep track of the receipts so that the blockNumber can be compared
   // against the `L1BlockNumber` on the tx objects.
-  const receipts = []
-  it('should enqueue some transactions', async () => {
-    // Keep track of the L2 tip before submitting any transactions so that
-    // the subsequent transactions can be queried for in the next test
-    pre = await l2Provider.getBlock('latest')
+  it('should perform deposits and L2 transactions', async () => {
+    const numTxsToSend = 15
+    const numDepositsToSend = 10
+    const tasks = [
+      spamL1Deposits(
+        l1DepositInitiator,
+        ctcAddress,
+        l2DepositTracker.address,
+        numDepositsToSend,
+        l1Signer
+      ),
+      spamL2Txs(l2TxStorage, numTxsToSend, l2Signer),
+    ]
+    await Promise.all(tasks)
+  }).timeout(0)
 
-    // Enqueue some transactions by building the calldata and then sending
-    // the transaction to Layer 1
-    for (let i = 0; i < 5; i++) {
-      const input = ['0x' + `${i + 1}`.repeat(40), 500_000, `0x0${i}`]
-      const calldata = await canonicalTransactionChain.interface.encodeFunctionData(
-        'enqueue',
-        input
+  describe('Switching over CTC', async () => {
+    before(async () => {
+      await addressResolver.setAddress(
+        'OVM_CanonicalTransactionChain',
+        newCanonicalTransactionChain.address
       )
+      const newCTCAddress = await addressResolver.getAddress(
+        'OVM_CanonicalTransactionChain'
+      )
+      console.log(newCTCAddress)
+      expect(newCTCAddress).to.equal(newCanonicalTransactionChain.address)
+    })
 
-      const txResponse = await l1Signer.sendTransaction({
-        data: calldata,
-        to: ctcAddress,
-      })
+    it('should perform deposits and L2 transactions on new CTC', async () => {
+      const numTxsToSend = 15
+      const numDepositsToSend = 10
+      const tasks = [
+        spamL1Deposits(
+          l1DepositInitiator,
+          newCanonicalTransactionChain.address,
+          l2DepositTracker.address,
+          numDepositsToSend,
+          l1Signer
+        ),
+        spamL2Txs(l2TxStorage, numTxsToSend, l2Signer),
+      ]
+      await Promise.all(tasks)
+      console.log('done sending txs, sleeping for 2 minutes...')
+    }).timeout(0)
 
-      const receipt = await txResponse.wait()
-      receipts.push(receipt)
-    }
+    it('should verify deposits and L2 transactions', async () => {
+      const actualIndexes = await verifyL1Deposits(
+        l1DepositInitiator,
+        l1Signer.address
+      )
+      await verifyL2Deposits(
+        l1DepositInitiator,
+        l2DepositTracker,
+        l1Signer.address,
+        actualIndexes
+      )
+      await verifyL2Txs(l2TxStorage)
+    }).timeout(0)
 
-    for (const receipt of receipts) {
-      receipt.should.be.a('object')
-    }
-  })
+    it('should have batch submitted all transactions', async () => {
+      const numOldElements = await canonicalTransactionChain.getTotalElements()
+      const numNewElements = await newCanonicalTransactionChain.getTotalElements()
+      const numOldQueued = await newCanonicalTransactionChain.getQueueLength()
+      const numNewQueued = await newCanonicalTransactionChain.getQueueLength()
+      console.log(
+        'old new old new',
+        numOldElements,
+        numNewElements,
+        numOldQueued,
+        numNewQueued
+      )
+    }).timeout(0)
 
-  before(async () => {
-    const CanonicalTransactionChainFactory = getContractFactory(
-      'OVM_CanonicalTransactionChain'
+    it('should have picked up all transactions in DTL', async () => {}).timeout(
+      0
     )
   })
 })
