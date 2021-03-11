@@ -27,47 +27,6 @@ describe('Transactions', () => {
     provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
   })
 
-  it('should send eth_sendRawEthSignTransaction', async () => {
-    const signer = provider.getSigner()
-    const chainId = await signer.getChainId()
-
-    const address = await signer.getAddress()
-    const nonce = await provider.getTransactionCount(address)
-
-    const tx = {
-      to: DUMMY_ADDRESS,
-      nonce,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      data: '0x',
-      value: 0,
-      chainId,
-    }
-
-    const hex = await signer.signTransaction(tx)
-
-    const txid = await provider.send('eth_sendRawEthSignTransaction', [hex])
-    await provider.waitForTransaction(txid)
-
-    const sent = await provider.getTransaction(txid)
-    assert(sent !== null)
-    // The correct signature hashing was performed
-    address.should.eq(sent.from)
-
-    // The correct transaction is being returned
-    tx.to.should.eq(sent.to)
-    tx.value.should.eq(sent.value.toNumber())
-    tx.nonce.should.eq(sent.nonce)
-    tx.gasLimit.should.eq(sent.gasLimit.toNumber())
-    tx.gasPrice.should.eq(sent.gasPrice.toNumber())
-    tx.data.should.eq(sent.data)
-
-    // Fetching the transaction receipt works correctly
-    const receipt = await provider.getTransactionReceipt(txid)
-    address.should.eq(receipt.from)
-    tx.to.should.eq(receipt.to)
-  })
-
   it('should sendTransaction', async () => {
     const signer = provider.getSigner()
     const chainId = await signer.getChainId()
