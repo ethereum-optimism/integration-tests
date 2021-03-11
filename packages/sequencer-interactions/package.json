@@ -26,5 +26,9 @@
     "chai": "^4.3.3",
     "ethereum-waffle": "^3.3.0",
     "mocha": "^8.3.1"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "^5.0.24",
+    "ethers": "^5.0.32"
   }
 }
