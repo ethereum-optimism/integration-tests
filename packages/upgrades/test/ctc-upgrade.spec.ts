@@ -56,13 +56,17 @@ describe('CTC upgrade', () => {
       addressResolverAddress
     )
 
-    ctcAddress = await addressResolver.getAddress('OVM_CanonicalTransactionChain')
+    ctcAddress = await addressResolver.getAddress(
+      'OVM_CanonicalTransactionChain'
+    )
 
     const CanonicalTransactionChainFactory = getContractFactory(
       'OVM_CanonicalTransactionChain'
     ).connect(l1Signer)
 
-    canonicalTransactionChain = CanonicalTransactionChainFactory.attach(ctcAddress)
+    canonicalTransactionChain = CanonicalTransactionChainFactory.attach(
+      ctcAddress
+    )
     newCanonicalTransactionChain = await CanonicalTransactionChainFactory.deploy(
       addressResolverAddress,
       FORCE_INCLUSION_PERIOD_SECONDS,
@@ -110,5 +114,4 @@ describe('CTC upgrade', () => {
       'OVM_CanonicalTransactionChain'
     )
   })
-  
 })

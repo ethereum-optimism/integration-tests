@@ -4,14 +4,15 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 
 import { Config } from '../../../common'
 import { Watcher } from '@eth-optimism/watcher'
-import { getContractInterface, getContractFactory } from '@eth-optimism/contracts'
+import {
+  getContractInterface,
+  getContractFactory,
+} from '@eth-optimism/contracts'
 import l1SimnpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
-import {
-  Contract, ContractFactory, Wallet,
-} from 'ethers'
+import { Contract, ContractFactory, Wallet } from 'ethers'
 
 let erc20
 let l1SimpleStorage
@@ -27,41 +28,63 @@ const l1Provider = new JsonRpcProvider(goerliURL)
 const l2Provider = new JsonRpcProvider(optimismURL)
 const l1Wallet = new Wallet(L1_USER_PRIVATE_KEY, l1Provider)
 const l2Wallet = new Wallet(L2_USER_PRIVATE_KEY, l2Provider)
-const l1MessengerInterface = getContractInterface('iAbs_BaseCrossDomainMessenger')
+const l1MessengerInterface = getContractInterface(
+  'iAbs_BaseCrossDomainMessenger'
+)
 const l2MessengerFactory = getContractFactory('OVM_L2CrossDomainMessenger')
 
 const addressManagerAddress = Config.AddressResolverAddress()
 const addressManagerInterface = getContractInterface('Lib_AddressManager')
-const AddressManager = new Contract(addressManagerAddress, addressManagerInterface, l1Provider)
+const AddressManager = new Contract(
+  addressManagerAddress,
+  addressManagerInterface,
+  l1Provider
+)
 const l2SimpleStorageFactory = new ContractFactory(
-  l2SimpleStorageJson.abi, l2SimpleStorageJson.bytecode, l2Wallet
+  l2SimpleStorageJson.abi,
+  l2SimpleStorageJson.bytecode,
+  l2Wallet
 )
 const l1SimpleStorageFactory = new ContractFactory(
-  l1SimnpleStorageJson.abi, l1SimnpleStorageJson.bytecode, l1Wallet
+  l1SimnpleStorageJson.abi,
+  l1SimnpleStorageJson.bytecode,
+  l1Wallet
 )
 const ERC20Factory = new ContractFactory(
-  erc20Json.abi, erc20Json.bytecode, l2Wallet
+  erc20Json.abi,
+  erc20Json.bytecode,
+  l2Wallet
 )
 
 let watcher
 const initWatcher = async () => {
-  l1MessengerAddress = await AddressManager.getAddress('Proxy__OVM_L1CrossDomainMessenger')
-  l2MessengerAddress = await AddressManager.getAddress('OVM_L2CrossDomainMessenger')
+  l1MessengerAddress = await AddressManager.getAddress(
+    'Proxy__OVM_L1CrossDomainMessenger'
+  )
+  l2MessengerAddress = await AddressManager.getAddress(
+    'OVM_L2CrossDomainMessenger'
+  )
   return new Watcher({
     l1: {
       provider: l1Provider,
-      messengerAddress: l1MessengerAddress
+      messengerAddress: l1MessengerAddress,
     },
     l2: {
       provider: l2Provider,
-      messengerAddress: l2MessengerAddress
-    }
+      messengerAddress: l2MessengerAddress,
+    },
   })
 }
 
 const deposit = async (amount, value) => {
-  const l1Messenger = new Contract(l1MessengerAddress, l1MessengerInterface, l1Wallet)
-  const calldata = l2SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l1Messenger = new Contract(
+    l1MessengerAddress,
+    l1MessengerInterface,
+    l1Wallet
+  )
+  const calldata = l2SimpleStorage.interface.encodeFunctionData('setValue', [
+    value,
+  ])
   const l1ToL2Tx = await l1Messenger.sendMessage(
     l2SimpleStorage.address,
     calldata,
@@ -74,8 +97,14 @@ const deposit = async (amount, value) => {
 }
 
 const withdraw = async (value) => {
-  const l2Messenger = new Contract(l2MessengerAddress, l2MessengerFactory.interface, l2Wallet)
-  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [value])
+  const l2Messenger = new Contract(
+    l2MessengerAddress,
+    l2MessengerFactory.interface,
+    l2Wallet
+  )
+  const calldata = l1SimpleStorage.interface.encodeFunctionData('setValue', [
+    value,
+  ])
   const l2ToL1Tx = await l2Messenger.sendMessage(
     l1SimpleStorage.address,
     calldata,
@@ -141,7 +170,10 @@ describe('ERC20', async () => {
 
   before(async () => {
     erc20 = await ERC20Factory.deploy(
-      initialAmount, tokenName, tokenDecimals, TokenSymbol
+      initialAmount,
+      tokenName,
+      tokenDecimals,
+      TokenSymbol
     )
   })
 
@@ -179,9 +211,9 @@ describe('ERC20', async () => {
     assert.strictEqual(receipt.events.length, 2)
     const transferFeeEvent = receipt.events[0]
     const transferEvent = receipt.events[1]
-    assert.strictEqual(transferEvent.args._from, l1Wallet.address);
-    assert.strictEqual(transferFeeEvent.args._value.toString(), '0');
-    assert.strictEqual(transferEvent.args._value.toString(), '100');
+    assert.strictEqual(transferEvent.args._from, l1Wallet.address)
+    assert.strictEqual(transferFeeEvent.args._value.toString(), '0')
+    assert.strictEqual(transferEvent.args._value.toString(), '100')
     const receiverBalance = await erc20.balanceOf(alice.address)
     expect(receiverBalance.toNumber()).to.equal(100)
     const senderBalance = await erc20.balanceOf(l2Wallet.address)

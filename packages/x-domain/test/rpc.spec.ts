@@ -212,7 +212,7 @@ describe('Transactions', () => {
         gasPrice: 0,
         data: '0x',
         value: 0,
-        chainId: parseInt(chainId, 16) + 1
+        chainId: parseInt(chainId, 16) + 1,
       })
       assert(false)
     } catch (e) {

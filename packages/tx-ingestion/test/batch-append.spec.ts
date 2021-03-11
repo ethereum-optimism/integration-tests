@@ -52,7 +52,9 @@ describe('Transaction Ingestion', () => {
       addressResolverAddress
     )
 
-    ctcAddress = await addressResolver.getAddress('OVM_CanonicalTransactionChain')
+    ctcAddress = await addressResolver.getAddress(
+      'OVM_CanonicalTransactionChain'
+    )
 
     const CanonicalTransactionChainFactory = getContractFactory(
       'OVM_CanonicalTransactionChain'
@@ -103,7 +105,7 @@ describe('Transaction Ingestion', () => {
   it('should order transactions correctly', async () => {
     // Wait until each tx from the previous test has
     // been executed
-    let tip;
+    let tip
     do {
       tip = await l2Provider.getBlock('latest')
       await sleep(5000)
@@ -122,7 +124,7 @@ describe('Transaction Ingestion', () => {
       assert(typeof hash === 'string')
       // Use as any hack because additional properties are
       // added to the transaction response
-      const tx = await l2Provider.getTransaction(hash) as any
+      const tx = (await l2Provider.getTransaction(hash)) as any
       // The `to` addresses are defined in the previous test and
       // increment sequentially.
       assert.equal(tx.to, '0x' + `${i}`.repeat(40))
