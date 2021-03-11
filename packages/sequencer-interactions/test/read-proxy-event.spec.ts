@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { ContractFactory, Wallet } from 'ethers'
+import { Contract, ContractFactory, Wallet } from 'ethers'
 import { Config } from '../../../common'
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 import upgradeableProxyJson = require('../../../contracts/build-ovm/UpgradeableProxy.json')
@@ -12,31 +12,38 @@ describe('Read proxy event', () => {
   before(async () => {
     // l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
     // l1Signer = new Wallet(Config.DeployerPrivateKey()).connect(l1Provider))
+    const key =
+    '0xa35617f4fe630bf50024fcbe2c051d2dffe5ea19695b2d660ce4db7a5acdcc30'
     l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
-    l2Wallet = new Wallet(Config.Mnemonic()).connect(l2Provider)
+    l2Wallet = new Wallet(key).connect(l2Provider)
     // l2Wallet = await l2Provider.getSigner()
   })
 
   it('should read the event correctly', async () => {
+    const initialAmount = 1000
+    const tokenName = 'OVM Test'
+    const tokenDecimals = 8
+    const TokenSymbol = 'TOK'
+
     const implFactory = new ContractFactory(
       erc20Json.abi,
       erc20Json.bytecode,
-     l2Wallet
+      l2Wallet
     )
-    const impl = await implFactory.deploy([])
+    const impl = await implFactory.deploy(initialAmount, tokenName, tokenDecimals, TokenSymbol)
+    await impl.deployTransaction.wait()
 
-    // TODO(annie): copy over factory and compile during test
+    // erc20Json.abi[0].inputs = []
     const proxyFactory = new ContractFactory(
-      [...erc20Json.abi, ...upgradeableProxyJson.abi],
+      upgradeableProxyJson.abi,
+      // [...erc20Json.abi, ...upgradeableProxyJson.abi],
       upgradeableProxyJson.bytecode,
       l2Wallet
     )
-    const contract = await proxyFactory.deploy([impl.address, Buffer.from('')])
+    const proxy = await proxyFactory.deploy(impl.address, Buffer.from(''))
+    await proxy.deployTransaction.wait()
 
-    // Init ERC20 contract
-    const payload = ['1000', 'TOK', {gasPrice: 0, gasLimit: 8999999 }];
-    const initTx = await contract.init(...payload);
-    await initTx.wait();
+    const contract = new Contract(proxy.address, erc20Json.abi, l2Wallet)
 
     const _transfer = async (to, amount) => {
       const transferTx = await contract.transfer(to, amount);
