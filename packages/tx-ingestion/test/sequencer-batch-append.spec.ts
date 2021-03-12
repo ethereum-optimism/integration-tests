@@ -12,8 +12,6 @@ import { deployContract } from 'ethereum-waffle'
 import assert = require('assert')
 import ERC20 = require('../../../contracts/build-ovm/ERC20.json')
 
-// TODO(mark): Remove the skip of this test when
-// the verifier is enabled in geth
 describe('Queue Origin Sequencer Transactions', () => {
   let optimismProvider
   let provider: JsonRpcProvider
