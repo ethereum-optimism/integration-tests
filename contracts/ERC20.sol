@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: MIT
+
 /*
 Implements ERC20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 .*/
 
 
-pragma solidity >=0.5.0 <0.8.0;
+pragma solidity >=0.7.0 <0.8.0;
 
 import "./IERC20.sol";
 

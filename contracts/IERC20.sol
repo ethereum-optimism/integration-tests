@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: MIT
+
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-pragma solidity >=0.5.0 <0.8.0;
+pragma solidity >=0.7.0 <0.8.0;
 
 
 abstract contract IERC20 {
