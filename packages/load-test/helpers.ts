@@ -6,7 +6,7 @@ import L1DepositInitiator = require('../../contracts/build/L1DepositInitiator.js
 import L2TxStorage = require('../../contracts/build-ovm/L2TxStorage.json')
 import { Contract } from '@ethersproject/contracts'
 
-export const deploySpamContracts = async (
+export const deployLoadTestContracts = async (
   l1Wallet,
   l2Wallet,
   L2_DEPOSIT_TRACKER_ADDRESS?,
@@ -75,6 +75,7 @@ export const spamL1Deposits = async (
   numTxsToSend,
   wallet
 ) => {
+  console.log('sending', numTxsToSend, 'l1->l2 messages')
   const numDeposits = (await l1DepositInitiator.numDeposits()).toNumber()
   for (let i = numDeposits; i < numDeposits + numTxsToSend; i++) {
     while (true) {
@@ -82,7 +83,7 @@ export const spamL1Deposits = async (
         const tx = await l1DepositInitiator
           .connect(wallet)
           .initiateDeposit(i, ctcAddress, l2DepositTrackerAddress)
-        console.log('sent deposit', i, tx.hash)
+        // console.log('sent deposit', i, tx.hash)
         await tx.wait()
         break
       } catch (error) {
@@ -96,6 +97,7 @@ export const spamL1Deposits = async (
 
 export const spamL2Txs = async (l2TxStorage, numTxsToSend, wallet) => {
   const numTxs = (await l2TxStorage.numTxs()).toNumber()
+  console.log('sending', numTxsToSend, 'l2 transactions')
   for (let i = numTxs; i < numTxs + numTxsToSend; i++) {
     while (true) {
       try {
@@ -103,7 +105,7 @@ export const spamL2Txs = async (l2TxStorage, numTxsToSend, wallet) => {
           .connect(wallet)
           .sendTx(i, Math.round(Date.now() / 1000))
         await tx.wait()
-        console.log('sent tx', i, tx.hash)
+        // console.log('sent tx', i, tx.hash)
         break
       } catch (error) {
         console.error('error sending tx', i, 'retrying in 1 second')
@@ -124,13 +126,13 @@ export const verifyL2Txs = async (l2TxStorage) => {
     )
     const receivedTime = getTx.timestampReceived.toNumber()
     const sentTime = getTx.realWorldTimeSent.toNumber()
-    if (sentTime > receivedTime) {
-      console.log(
-        `received tx ${i}: ${sentTime - receivedTime} seconds in the past`
-      )
-    } else {
-      console.log(`received tx ${i} after `, receivedTime - sentTime, 'seconds')
-    }
+    // if (sentTime > receivedTime) {
+    //   console.log(
+    //     `received tx ${i}: ${sentTime - receivedTime} seconds in the past`
+    //   )
+    // } else {
+    //   console.log(`received tx ${i} after `, receivedTime - sentTime, 'seconds')
+    // }
   }
 }
 
@@ -144,7 +146,6 @@ export const verifyL2Deposits = async (
     await l1DepositInitiator.numDeposits()
   ).toNumber()
   const numDeposits = (await l2DepositTracker.numDeposits()).toNumber()
-  //expect(numDeposits).to.equal(numInitiatedDeposits, 'Not all initiated deposits have been received...')
 
   console.log('found', numDeposits, 'completed deposits')
   for (let i = 0; i < numDeposits; i++) {
@@ -155,9 +156,9 @@ export const verifyL2Deposits = async (
     )
     const receivedTime = deposit.receivedTimestamp.toNumber()
     const sentTime = deposit.initiatedTimestamp.toNumber()
-    console.log(
-      `deposit ${i} received after ${receivedTime - sentTime} seconds`
-    )
+    // console.log(
+    //   `deposit ${i} received after ${receivedTime - sentTime} seconds`
+    // )
     expect(deposit.depositIndex.toNumber()).to.equal(
       actualIndexes[i],
       'Received Deposit index does not match up to array index'
@@ -182,7 +183,7 @@ export const verifyL1Deposits = async (l1DepositInitiator, walletAddress) => {
     }
     actualIndexes.push(deposit.depositIndex.toNumber())
     // expect(deposit.depositIndex.toNumber()).to.equal(i, 'Sent Deposit index does not match up to array index')
-    console.log('deposit', i, 'initiated successfully')
+    // console.log('deposit', i, 'initiated successfully')
   }
   return actualIndexes
 }

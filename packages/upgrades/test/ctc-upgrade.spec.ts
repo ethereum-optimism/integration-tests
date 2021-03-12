@@ -14,14 +14,18 @@ import { getContractFactory } from '@eth-optimism/contracts'
 import { L1DataTransportClient } from '@eth-optimism/data-transport-layer'
 import assert = require('assert')
 import {
-  deploySpamContracts,
+  deployLoadTestContracts,
   spamL1Deposits,
   spamL2Txs,
   verifyL1Deposits,
   verifyL2Deposits,
   verifyL2Txs,
 } from '../../load-test/helpers'
-import { expect } from 'chai'
+import { solidity } from 'ethereum-waffle'
+import chai = require('chai')
+
+chai.use(solidity)
+const expect = chai.expect
 
 describe('CTC upgrade', () => {
   let l1Provider: JsonRpcProvider
@@ -29,7 +33,7 @@ describe('CTC upgrade', () => {
   let l2Signer
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
-  const dtlClient =  new L1DataTransportClient('http://localhost:7878')
+  const dtlClient = new L1DataTransportClient('http://localhost:7878')
 
   let canonicalTransactionChain: Contract
   let newCanonicalTransactionChain: Contract
@@ -37,14 +41,16 @@ describe('CTC upgrade', () => {
 
   const mnemonic = Config.Mnemonic()
 
-  const FORCE_INCLUSION_PERIOD_SECONDS = 600
-  const FORCE_INCLUSION_PERIOD_BLOCKS = 600 / 12
+  const FORCE_INCLUSION_PERIOD_SECONDS = 2592000 // 30 days
+  const FORCE_INCLUSION_PERIOD_BLOCKS = Math.floor(2592000 / 13) //30 days of blocks
   const MAX_GAS_LIMIT = 8_000_000
-  let pre
+  const NUM_TXS_TO_SEND = 15
+  const NUM_DEPOSITS_TO_SEND = 10
+
   let l2DepositTracker
   let l1DepositInitiator
   let l2TxStorage
-  let latestDTLTxIndex
+  let startingDTLTxIndex
   let startingNumElements
   let startingNumQueued
 
@@ -63,7 +69,7 @@ describe('CTC upgrade', () => {
     ctcAddress = await addressResolver.getAddress(
       'OVM_CanonicalTransactionChain'
     )
-    console.log('ctc at', ctcAddress)
+    console.log('connected to existing CanonicalTransactionChain at', ctcAddress)
 
     const CanonicalTransactionChainFactory = getContractFactory(
       'OVM_CanonicalTransactionChain'
@@ -82,13 +88,15 @@ describe('CTC upgrade', () => {
       l2DepositTracker,
       l1DepositInitiator,
       l2TxStorage,
-    } = await deploySpamContracts(l1Signer, l2Signer))
+    } = await deployLoadTestContracts(l1Signer, l2Signer))
     console.log('deployed all contracts, sleeping for 30 seconds')
     await sleep(1000 * 30)
     const latestDTLTx = await dtlClient.getLatestTransacton()
-    latestDTLTxIndex = latestDTLTx.transaction.index
-    console.log('latest dtl tx index:', latestDTLTxIndex)
-    startingNumElements = await newCanonicalTransactionChain.getTotalElements()
+    startingDTLTxIndex = latestDTLTx.transaction.index
+    console.log('starting dtl tx index:', startingDTLTxIndex)
+    startingNumElements = (
+      await newCanonicalTransactionChain.getTotalElements()
+    ).toNumber()
     startingNumQueued = await newCanonicalTransactionChain.getQueueLength()
   })
 
@@ -98,19 +106,31 @@ describe('CTC upgrade', () => {
   // Keep track of the receipts so that the blockNumber can be compared
   // against the `L1BlockNumber` on the tx objects.
   it('should perform deposits and L2 transactions', async () => {
-    const numTxsToSend = 15
-    const numDepositsToSend = 10
     const tasks = [
       spamL1Deposits(
         l1DepositInitiator,
         ctcAddress,
         l2DepositTracker.address,
-        numDepositsToSend,
+        NUM_DEPOSITS_TO_SEND,
         l1Signer
       ),
-      spamL2Txs(l2TxStorage, numTxsToSend, l2Signer),
+      spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer),
     ]
     await Promise.all(tasks)
+  }).timeout(0)
+
+  it('should revert when trying to enqueue to new CTC', async () => {
+    await expect(
+      l1DepositInitiator
+        .connect(l1Signer)
+        .initiateDeposit(
+          100,
+          newCanonicalTransactionChain.address,
+          l2DepositTracker.address
+        )
+    ).to.be.revertedWith(
+      'OVM_ChainStorageContainer: Function can only be called by the owner.'
+    )
   }).timeout(0)
 
   describe('Switching over CTC', async () => {
@@ -122,26 +142,24 @@ describe('CTC upgrade', () => {
       const newCTCAddress = await addressResolver.getAddress(
         'OVM_CanonicalTransactionChain'
       )
-      console.log(newCTCAddress)
+      console.log('deployed new CanonicalTransactionChain to', newCTCAddress)
       expect(newCTCAddress).to.equal(newCanonicalTransactionChain.address)
     })
 
     it('should perform deposits and L2 transactions on new CTC', async () => {
-      const numTxsToSend = 15
-      const numDepositsToSend = 10
       const tasks = [
         spamL1Deposits(
           l1DepositInitiator,
           newCanonicalTransactionChain.address,
           l2DepositTracker.address,
-          numDepositsToSend,
+          NUM_DEPOSITS_TO_SEND,
           l1Signer
         ),
-        spamL2Txs(l2TxStorage, numTxsToSend, l2Signer),
+        spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer),
       ]
       await Promise.all(tasks)
-      console.log('done sending txs, sleeping for 2 minutes...')
-      await sleep(1000 * 60 * 2)
+      console.log('done sending txs, sleeping for 30 seconds...')
+      await sleep(1000 * 30)
     }).timeout(0)
 
     it('should verify deposits and L2 transactions', async () => {
@@ -161,20 +179,26 @@ describe('CTC upgrade', () => {
     it('should have batch submitted all transactions', async () => {
       const numElements = await newCanonicalTransactionChain.getTotalElements()
       const numQueued = await newCanonicalTransactionChain.getQueueLength()
-      expect(numElements.toNumber()).to.equal(startingNumElements + 50)
-      expect(numQueued.toNumber()).to.equal(startingNumQueued + 20)
+      const expectedNumElements = startingNumElements + (NUM_DEPOSITS_TO_SEND + NUM_TXS_TO_SEND) * 2
+      expect(numElements.toNumber()).to.equal(expectedNumElements)
+      const expectedNumQueued = startingNumQueued + NUM_DEPOSITS_TO_SEND * 2
+      expect(numQueued).to.equal(expectedNumQueued)
     }).timeout(0)
 
     it('should have picked up all transactions in DTL', async () => {
       const latestDTLTx = await dtlClient.getLatestTransacton()
-      expect(latestDTLTx.transaction.index).to.equal(latestDTLTxIndex + 50)
+      const expectedDTLIndex = startingDTLTxIndex + (NUM_DEPOSITS_TO_SEND + NUM_TXS_TO_SEND) * 2
+      expect(latestDTLTx.transaction.index).to.equal(expectedDTLIndex)
     }).timeout(0)
 
-    // it('should not be able to enqueue to old CTC', async () => {
-    //   expect(l1DepositInitiator
-    //     .connect(l1Signer)
-    //     .initiateDeposit(100, ctcAddress, l2DepositTracker.address)
-    //   ).to.throw()
-    // }).timeout(0)
+    it('should revert when trying to enqueue to old CTC', async () => {
+      await expect(
+        l1DepositInitiator
+          .connect(l1Signer)
+          .initiateDeposit(100, ctcAddress, l2DepositTracker.address)
+      ).to.be.revertedWith(
+        'OVM_ChainStorageContainer: Function can only be called by the owner.'
+      )
+    }).timeout(0)
   })
 })
