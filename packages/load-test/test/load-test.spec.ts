@@ -6,7 +6,7 @@
 
 import { Config, sleep, poll, getL1Provider } from '../../../common'
 import {
-  deploySpamContracts,
+  deployLoadTestContracts,
   spamL1Deposits,
   spamL2Txs,
   verifyL1Deposits,
@@ -58,7 +58,7 @@ describe('Deposit Load Test', async () => {
       l2DepositTracker,
       l1DepositInitiator,
       l2TxStorage,
-    } = await deploySpamContracts(
+    } = await deployLoadTestContracts(
       l1Wallet,
       l2Wallet,
       L2_DEPOSIT_TRACKER_ADDRESS,
