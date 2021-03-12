@@ -13,7 +13,7 @@ import { Contract, ContractFactory, Wallet, BigNumber } from 'ethers'
  * on L2 as the L1 timestamp
  */
 
-describe.only('OVM Context', () => {
+describe('OVM Context', () => {
   let address: string
   let CanonicalTransactionChain: Contract
   let OVMMulticall: Contract
