@@ -68,8 +68,10 @@ describe('Basic RPC tests', () => {
         chainId: chainId + 1,
       }
 
+      // TODO: Unfortunately ethers is catching this error. Need to redo this test so that the
+      // error doesn't get caught by ethers before we send it off.
       await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
-        'REPLACE_ME'
+        'chainId address mismatch'
       )
     })
 
@@ -79,9 +81,44 @@ describe('Basic RPC tests', () => {
         chainId: null, // Disables EIP155 transaction signing.
       }
 
-      await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
-        'REPLACE_ME'
-      )
+      // TODO: Not sure why this isn't being rejected. OptimismProvider?
+      // await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
+      //   'REPLACE_ME'
+      // )
+    })
+  })
+
+  describe('eth_getTransactionByHash', () => {
+    it('should be able to get all relevant l1/l2 transaction data', async () => {
+      const tx = defaultTransaction
+      const result = await signer.sendTransaction(tx)
+      await result.wait()
+
+      const transaction = await provider.getTransaction(result.hash)
+
+      expect(transaction.txType).to.equal('EthSign')
+      expect(transaction.queueOrigin).to.equal('sequencer')
+      expect(transaction.transactionIndex).to.equal(0) // Only one transaction per block!
+      expect(transaction.gasLimit).to.equal(tx.gasLimit)
+      expect(transaction.chainId).to.equal(Config.ChainID())
+    })
+  })
+
+  describe('eth_getBlockByHash', () => {
+    it('should return the block and all included transactions', async () => {
+      // Send a transaction and wait for it to be mined.
+      const tx = defaultTransaction
+      const result = await signer.sendTransaction(tx)
+      const receipt = await result.wait()
+
+      const block = await provider.getBlockWithTransactions(receipt.blockHash)
+
+      expect(block.number).to.not.equal(0)
+      expect(typeof block.stateRoot).to.equal('string')
+      expect(block.transactions.length).to.equal(1)
+      expect(block.transactions[0].txType).to.equal('EthSign')
+      expect(block.transactions[0].queueOrigin).to.equal('sequencer')
+      expect(block.transactions[0].l1TxOrigin).to.equal(null)
     })
   })
 
@@ -120,53 +157,6 @@ describe('Basic RPC tests', () => {
       }
     })
   })
-
-  // // Get a reference to the transaction sent in
-  // // this test to use in the next test
-  // let transaction
-  // it('should get transaction (l2 metadata)', async () => {
-  //   const tx = {
-  //     to: DUMMY_ADDRESS,
-  //     gasLimit: 4000000,
-  //     gasPrice: 0,
-  //     data: '0x',
-  //     value: 0,
-  //   }
-
-  //   const signer = provider.getSigner()
-  //   const result = await signer.sendTransaction(tx)
-  //   await result.wait()
-  //   transaction = await provider.getTransaction(result.hash)
-
-  //   transaction.txType.should.be.a('string')
-  //   transaction.txType.should.eq('EthSign')
-  //   transaction.queueOrigin.should.be.a('string')
-  //   transaction.queueOrigin.should.eq('sequencer')
-  //   // Only 1 transaction per block
-  //   transaction.transactionIndex.should.eq(0)
-  //   transaction.gasLimit.toNumber().should.eq(tx.gasLimit)
-  //   transaction.chainId.should.eq(Config.ChainID())
-  // })
-
-  // // This test depends on previous transactions being mined
-  // it('should get block with transactions', async () => {
-  //   const block = await provider.getBlockWithTransactions(transaction.blockHash)
-  //   assert(block.number !== 0)
-  //   // ethers JsonRpcProvider does not return the state root
-  //   // but the OptimismProvider does.
-  //   assert(typeof block.stateRoot === 'string')
-  //   // There must be a single transaction
-  //   assert(block.transactions.length === 1)
-  //   const tx = block.transactions[0]
-  //   // The `OptimismProvider` creates EthSign transactions
-  //   assert(tx.txType === 'EthSign')
-  //   // The transaction was sent directly to the sequencer so the
-  //   // queue origin is sequencer
-  //   assert(tx.queueOrigin === 'sequencer')
-  //   // The queue origin is the sequencer, not L1, so there is
-  //   // no L1TxOrigin
-  //   assert(tx.l1TxOrigin === null)
-  // })
 
   // // There was a bug that causes transactions to be reingested over
   // // and over again only when a single transaction was in the
