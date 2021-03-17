@@ -88,9 +88,9 @@ describe('Basic RPC tests', () => {
   describe('eth_chainId', () => {
     it('should get the correct chainid', async () => {
       const expected = Config.ChainID()
-      const chainId = await provider.send('eth_chainId', [])
+      const result = await provider.send('eth_chainId', [])
 
-      expect(parseInt(chainId, 16)).to.equal(expected)
+      expect(parseInt(result, 16)).to.equal(expected)
     })
   })
 
