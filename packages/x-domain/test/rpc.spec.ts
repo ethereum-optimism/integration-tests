@@ -4,179 +4,179 @@
  * https://github.com/ethereum-optimism
  */
 
-import { Config, sleep } from '../../../common'
+import { expect } from './setup'
+
+/* Imports: External */
 import { Web3Provider } from '@ethersproject/providers'
 import { ganache } from '@eth-optimism/plugins/ganache'
-import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
-import { verifyMessage } from '@ethersproject/wallet'
-import { computeAddress, parse } from '@ethersproject/transactions'
-import { SignatureLike, joinSignature } from '@ethersproject/bytes'
+import { OptimismProvider } from '@eth-optimism/provider'
 import assert = require('assert')
 
+/* Imports: Internal */
+import { Config, sleep } from '../../../common'
+
+// TODO: Move this into its own file.
 const DUMMY_ADDRESS = '0x' + '1234'.repeat(10)
 
-describe('Transactions', () => {
-  let provider
-
+describe('Basic RPC tests', () => {
+  let provider: OptimismProvider
+  let signer: any
+  let chainId: number
+  let defaultTransaction: any
   before(async () => {
-    const web3 = new Web3Provider(
-      ganache.provider({
-        mnemonic: Config.Mnemonic(),
-      })
+    provider = new OptimismProvider(
+      Config.L2NodeUrlWithPort(),
+      new Web3Provider(
+        ganache.provider({
+          mnemonic: Config.Mnemonic(),
+        })
+      )
     )
-    provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
-  })
 
-  it('should sendTransaction', async () => {
-    const signer = provider.getSigner()
-    const chainId = await signer.getChainId()
-
-    const address = await signer.getAddress()
-    const nonce = await provider.getTransactionCount(address)
-
-    const tx = {
+    signer = provider.getSigner()
+    chainId = await signer.getChainId()
+    defaultTransaction = {
       to: DUMMY_ADDRESS,
-      nonce,
+      nonce: 0,
       gasLimit: 4000000,
       gasPrice: 0,
       data: '0x',
       value: 0,
       chainId,
     }
-
-    const result = await signer.sendTransaction(tx)
-    await result.wait()
-
-    // "from" is calculated client side here, so
-    // make sure that it is computed correctly.
-    result.from.should.eq(address)
-
-    tx.nonce.should.eq(result.nonce)
-    tx.gasLimit.should.eq(result.gasLimit.toNumber())
-    tx.gasPrice.should.eq(result.gasPrice.toNumber())
-    tx.data.should.eq(result.data)
   })
 
-  it('gas price should be 0', async () => {
-    const price = await provider.getGasPrice()
-    const num = price.toNumber()
-    num.should.eq(0)
+  describe('eth_sendTransaction', () => {
+    it('should correctly process a valid transaction', async () => {
+      const tx = defaultTransaction
+
+      const result = await signer.sendTransaction(tx)
+      await result.wait()
+
+      // "from" is calculated client side here, so
+      // make sure that it is computed correctly.
+      expect(result.from).to.equal(await signer.getAddress())
+      expect(result.nonce).to.equal(tx.nonce)
+      expect(result.gasLimit.toNumber()).to.equal(tx.gasLimit)
+      expect(result.gasPrice.toNumber()).to.equal(tx.gasPrice)
+      expect(result.data).to.equal(tx.data)
+    })
+
+    it('should not accept a transaction with the wrong chain ID', async () => {
+      const tx = {
+        ...defaultTransaction,
+        chainId: chainId + 1,
+      }
+
+      await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
+        'REPLACE_ME'
+      )
+    })
+
+    it('should not accept a transaction without a chain ID', async () => {
+      const tx = {
+        ...defaultTransaction,
+        chainId: null, // Disables EIP155 transaction signing.
+      }
+
+      await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
+        'REPLACE_ME'
+      )
+    })
   })
 
-  it('should estimate gas', async () => {
-    const template = {
-      to: DUMMY_ADDRESS,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      value: 0,
-      data: '',
-    }
+  describe('eth_chainId', () => {
+    it('should get the correct chainid', async () => {
+      const expected = Config.ChainID()
+      const chainId = await provider.send('eth_chainId', [])
 
-    // The gas price is the same with different
-    // transaction sizes.
-    const cases = ['0x', '0x' + '00'.repeat(256)]
-
-    const estimates = []
-    for (const c of cases) {
-      template.data = c
-      const estimate = await provider.estimateGas(template)
-      estimates.push(estimate)
-    }
-
-    // Pull in the env var that configures the target
-    // gas limit in l2 geth
-    const targetGasLimit = Config.TargetGasLimit()
-
-    for (const estimate of estimates) {
-      estimate.toNumber().should.eq(targetGasLimit - 1)
-    }
+      expect(parseInt(chainId, 16)).to.equal(expected)
+    })
   })
 
-  it('should get correct chainid', async () => {
-    const chainId = await provider.send('eth_chainId', [])
-    const expected = Config.ChainID()
-    chainId.should.eq('0x' + expected.toString(16))
-    parseInt(chainId, 16).should.eq(expected)
+  describe('eth_gasPrice', () => {
+    it('gas price should be 0', async () => {
+      const expected = 0
+      const price = await provider.getGasPrice()
+
+      expect(price.toNumber()).to.equal(expected)
+    })
   })
 
-  // Get a reference to the transaction sent in
-  // this test to use in the next test
-  let transaction
-  it('should get transaction (l2 metadata)', async () => {
-    const tx = {
-      to: DUMMY_ADDRESS,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      data: '0x',
-      value: 0,
-    }
+  describe('eth_estimateGas', () => {
+    it('should return block gas limit minus one', async () => {
+      // We currently fix gas price to TargetGasLimit-1
+      const expected = Config.TargetGasLimit() - 1
 
-    const signer = provider.getSigner()
-    const result = await signer.sendTransaction(tx)
-    await result.wait()
-    transaction = await provider.getTransaction(result.hash)
+      // Repeat this test for a series of possible transaction sizes to demonstrate that we always
+      // get the same estimate.
+      for (const size of [0, 2, 8, 64, 256]) {
+        const estimate = await provider.estimateGas({
+          ...defaultTransaction,
+          data: '0x' + '00'.repeat(size),
+        })
 
-    transaction.txType.should.be.a('string')
-    transaction.txType.should.eq('EthSign')
-    transaction.queueOrigin.should.be.a('string')
-    transaction.queueOrigin.should.eq('sequencer')
-    // Only 1 transaction per block
-    transaction.transactionIndex.should.eq(0)
-    transaction.gasLimit.toNumber().should.eq(tx.gasLimit)
-    transaction.chainId.should.eq(Config.ChainID())
+        expect(estimate.toNumber()).to.equal(expected)
+      }
+    })
   })
 
-  // This test depends on previous transactions being mined
-  it('should get block with transactions', async () => {
-    const block = await provider.getBlockWithTransactions(transaction.blockHash)
-    assert(block.number !== 0)
-    // ethers JsonRpcProvider does not return the state root
-    // but the OptimismProvider does.
-    assert(typeof block.stateRoot === 'string')
-    // There must be a single transaction
-    assert(block.transactions.length === 1)
-    const tx = block.transactions[0]
-    // The `OptimismProvider` creates EthSign transactions
-    assert(tx.txType === 'EthSign')
-    // The transaction was sent directly to the sequencer so the
-    // queue origin is sequencer
-    assert(tx.queueOrigin === 'sequencer')
-    // The queue origin is the sequencer, not L1, so there is
-    // no L1TxOrigin
-    assert(tx.l1TxOrigin === null)
-  })
+  // // Get a reference to the transaction sent in
+  // // this test to use in the next test
+  // let transaction
+  // it('should get transaction (l2 metadata)', async () => {
+  //   const tx = {
+  //     to: DUMMY_ADDRESS,
+  //     gasLimit: 4000000,
+  //     gasPrice: 0,
+  //     data: '0x',
+  //     value: 0,
+  //   }
 
-  // There was a bug that causes transactions to be reingested over
-  // and over again only when a single transaction was in the
-  // canonical transaction chain. This test catches this by
-  // querying for the latest block and then waits and then queries
-  // the latest block again and then asserts that they are the same.
-  it('should not reingest transactions', async () => {
-    const one = await provider.getBlockWithTransactions('latest')
-    await sleep(2000)
-    const two = await provider.getBlockWithTransactions('latest')
-    assert.deepEqual(one, two)
-  })
+  //   const signer = provider.getSigner()
+  //   const result = await signer.sendTransaction(tx)
+  //   await result.wait()
+  //   transaction = await provider.getTransaction(result.hash)
 
-  it('should not accept transactions with incorrect chainid', async () => {
-    // set err initially to false so that it can be set to true
-    // in the `try/catch` below
-    let err = false
-    const chainId = await provider.send('eth_chainId', [])
-    const signer = provider.getSigner()
-    try {
-      await signer.sendTransaction({
-        to: DUMMY_ADDRESS,
-        gasLimit: 4000000,
-        gasPrice: 0,
-        data: '0x',
-        value: 0,
-        chainId: parseInt(chainId, 16) + 1
-      })
-      assert(false)
-    } catch (e) {
-      err = true
-    }
-    assert(err)
-  })
+  //   transaction.txType.should.be.a('string')
+  //   transaction.txType.should.eq('EthSign')
+  //   transaction.queueOrigin.should.be.a('string')
+  //   transaction.queueOrigin.should.eq('sequencer')
+  //   // Only 1 transaction per block
+  //   transaction.transactionIndex.should.eq(0)
+  //   transaction.gasLimit.toNumber().should.eq(tx.gasLimit)
+  //   transaction.chainId.should.eq(Config.ChainID())
+  // })
+
+  // // This test depends on previous transactions being mined
+  // it('should get block with transactions', async () => {
+  //   const block = await provider.getBlockWithTransactions(transaction.blockHash)
+  //   assert(block.number !== 0)
+  //   // ethers JsonRpcProvider does not return the state root
+  //   // but the OptimismProvider does.
+  //   assert(typeof block.stateRoot === 'string')
+  //   // There must be a single transaction
+  //   assert(block.transactions.length === 1)
+  //   const tx = block.transactions[0]
+  //   // The `OptimismProvider` creates EthSign transactions
+  //   assert(tx.txType === 'EthSign')
+  //   // The transaction was sent directly to the sequencer so the
+  //   // queue origin is sequencer
+  //   assert(tx.queueOrigin === 'sequencer')
+  //   // The queue origin is the sequencer, not L1, so there is
+  //   // no L1TxOrigin
+  //   assert(tx.l1TxOrigin === null)
+  // })
+
+  // // There was a bug that causes transactions to be reingested over
+  // // and over again only when a single transaction was in the
+  // // canonical transaction chain. This test catches this by
+  // // querying for the latest block and then waits and then queries
+  // // the latest block again and then asserts that they are the same.
+  // it('should not reingest transactions', async () => {
+  //   const one = await provider.getBlockWithTransactions('latest')
+  //   await sleep(2000)
+  //   const two = await provider.getBlockWithTransactions('latest')
+  //   assert.deepEqual(one, two)
+  // })
 })
