@@ -7,55 +7,47 @@
 import { expect } from './setup'
 
 /* Imports: External */
-import { Web3Provider } from '@ethersproject/providers'
-import { ganache } from '@eth-optimism/plugins/ganache'
-import { OptimismProvider } from '@eth-optimism/provider'
-import assert = require('assert')
+import { ethers } from 'ethers'
 
 /* Imports: Internal */
-import { Config, sleep } from '../../../common'
+import { Config } from '../../../common'
+import { makeRandomHexString } from '../helpers'
 
 // TODO: Move this into its own file.
-const DUMMY_ADDRESS = '0x' + '1234'.repeat(10)
+const DEFAULT_TRANSACTION = {
+  to: '0x' + '1234'.repeat(10),
+  gasLimit: 4000000,
+  gasPrice: 0,
+  data: '0x',
+  value: 0,
+}
 
 describe('Basic RPC tests', () => {
-  let provider: OptimismProvider
-  let signer: any
-  let chainId: number
-  let defaultTransaction: any
+  let provider: ethers.providers.JsonRpcProvider
   before(async () => {
-    provider = new OptimismProvider(
-      Config.L2NodeUrlWithPort(),
-      new Web3Provider(
-        ganache.provider({
-          mnemonic: Config.Mnemonic(),
-        })
-      )
-    )
-
-    signer = provider.getSigner()
-    chainId = await signer.getChainId()
-    defaultTransaction = {
-      to: DUMMY_ADDRESS,
-      nonce: 0,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      data: '0x',
-      value: 0,
-      chainId,
-    }
+    provider = new ethers.providers.JsonRpcProvider(Config.L2NodeUrlWithPort())
   })
 
-  describe('eth_sendTransaction', () => {
-    it('should correctly process a valid transaction', async () => {
-      const tx = defaultTransaction
+  let wallet: ethers.Wallet
+  beforeEach(async () => {
+    // Generate a new random wallet before each test. Otherwise we'll run into stateful issues with
+    // nonces and whatnot.
+    wallet = new ethers.Wallet(makeRandomHexString(64), provider)
+  })
 
-      const result = await signer.sendTransaction(tx)
+  describe('eth_sendRawTransaction', () => {
+    it('should correctly process a valid transaction', async () => {
+      const tx = {
+        ...DEFAULT_TRANSACTION,
+        nonce: 0,
+      }
+
+      const result = await wallet.sendTransaction(tx)
       await result.wait()
 
       // "from" is calculated client side here, so
       // make sure that it is computed correctly.
-      expect(result.from).to.equal(await signer.getAddress())
+      expect(result.from).to.equal(wallet.address)
       expect(result.nonce).to.equal(tx.nonce)
       expect(result.gasLimit.toNumber()).to.equal(tx.gasLimit)
       expect(result.gasPrice.toNumber()).to.equal(tx.gasPrice)
@@ -64,59 +56,64 @@ describe('Basic RPC tests', () => {
 
     it('should not accept a transaction with the wrong chain ID', async () => {
       const tx = {
-        ...defaultTransaction,
-        chainId: chainId + 1,
+        ...DEFAULT_TRANSACTION,
+        chainId: (await wallet.getChainId()) + 1,
       }
 
-      // TODO: Unfortunately ethers is catching this error. Need to redo this test so that the
-      // error doesn't get caught by ethers before we send it off.
-      await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
-        'chainId address mismatch'
-      )
+      await expect(
+        provider.sendTransaction(await wallet.signTransaction(tx))
+      ).to.eventually.be.rejectedWith('invalid transaction: invalid sender')
     })
 
     it('should not accept a transaction without a chain ID', async () => {
       const tx = {
-        ...defaultTransaction,
+        ...DEFAULT_TRANSACTION,
         chainId: null, // Disables EIP155 transaction signing.
       }
 
-      // TODO: Not sure why this isn't being rejected. OptimismProvider?
-      // await expect(signer.sendTransaction(tx)).to.eventually.be.rejectedWith(
-      //   'REPLACE_ME'
-      // )
+      await expect(
+        provider.sendTransaction(await wallet.signTransaction(tx))
+      ).to.eventually.be.rejectedWith('Cannot submit unprotected transaction')
     })
   })
 
   describe('eth_getTransactionByHash', () => {
     it('should be able to get all relevant l1/l2 transaction data', async () => {
-      const tx = defaultTransaction
-      const result = await signer.sendTransaction(tx)
+      const tx = DEFAULT_TRANSACTION
+      const result = await wallet.sendTransaction(tx)
       await result.wait()
 
-      const transaction = await provider.getTransaction(result.hash)
+      const transaction = await provider.send('eth_getTransactionByHash', [
+        result.hash,
+      ])
 
-      expect(transaction.txType).to.equal('EthSign')
+      expect(transaction.txType).to.equal('EIP155')
       expect(transaction.queueOrigin).to.equal('sequencer')
-      expect(transaction.transactionIndex).to.equal(0) // Only one transaction per block!
-      expect(transaction.gasLimit).to.equal(tx.gasLimit)
-      expect(transaction.chainId).to.equal(Config.ChainID())
+      expect(
+        ethers.BigNumber.from(transaction.transactionIndex).toNumber()
+      ).to.equal(0) // Only one transaction per block!
+      expect(ethers.BigNumber.from(transaction.gas).toNumber()).to.equal(
+        tx.gasLimit
+      )
     })
   })
 
   describe('eth_getBlockByHash', () => {
     it('should return the block and all included transactions', async () => {
       // Send a transaction and wait for it to be mined.
-      const tx = defaultTransaction
-      const result = await signer.sendTransaction(tx)
+      const tx = DEFAULT_TRANSACTION
+      const result = await wallet.sendTransaction(tx)
       const receipt = await result.wait()
 
-      const block = await provider.getBlockWithTransactions(receipt.blockHash)
+      const block = await provider.send('eth_getBlockByHash', [
+        receipt.blockHash,
+        true,
+      ])
 
       expect(block.number).to.not.equal(0)
       expect(typeof block.stateRoot).to.equal('string')
       expect(block.transactions.length).to.equal(1)
-      expect(block.transactions[0].txType).to.equal('EthSign')
+      expect(block.transactions[0].txType).to.equal('EIP155')
       expect(block.transactions[0].queueOrigin).to.equal('sequencer')
       expect(block.transactions[0].l1TxOrigin).to.equal(null)
     })
@@ -149,7 +146,7 @@ describe('Basic RPC tests', () => {
       // get the same estimate.
       for (const size of [0, 2, 8, 64, 256]) {
         const estimate = await provider.estimateGas({
-          ...defaultTransaction,
+          ...DEFAULT_TRANSACTION,
           data: '0x' + '00'.repeat(size),
         })
 
