@@ -5,12 +5,17 @@ import { BigNumber, Contract, Wallet, utils } from 'ethers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { Watcher } from '@eth-optimism/watcher'
 
-import { getEnvironment, waitForDepositTypeTransaction, waitForWithdrawalTypeTransaction } from '../helpers'
+import {
+  getEnvironment,
+  waitForDepositTypeTransaction,
+  waitForWithdrawalTypeTransaction,
+} from '../helpers'
 
 const l1GatewayInterface = getContractInterface('OVM_L1ETHGateway')
 
 const OVM_ETH_ADDRESS = '0x4200000000000000000000000000000000000006'
-const PROXY_SEQUENCER_ENTRYPOINT_ADDRESS = '0x4200000000000000000000000000000000000004'
+const PROXY_SEQUENCER_ENTRYPOINT_ADDRESS =
+  '0x4200000000000000000000000000000000000004'
 
 let l1Provider: JsonRpcProvider
 let l2Provider: JsonRpcProvider
@@ -23,28 +28,29 @@ describe('Fee Payment Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
-  const getBalances = async ():
-    Promise<{
-      l1UserBalance: BigNumber,
-      l2UserBalance: BigNumber,
-      l1GatewayBalance: BigNumber,
-      sequencerBalance: BigNumber,
-    }> => {
-      const l1UserBalance = BigNumber.from(
-        await l1Provider.send('eth_getBalance', [l1Wallet.address])
-      )
-      const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
-      const sequencerBalance = await OVM_ETH.balanceOf(PROXY_SEQUENCER_ENTRYPOINT_ADDRESS)
-      const l1GatewayBalance = BigNumber.from(
-        await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
-      )
-      return {
-        l1UserBalance,
-        l2UserBalance,
-        l1GatewayBalance,
-        sequencerBalance
-      }
+  const getBalances = async (): Promise<{
+    l1UserBalance: BigNumber
+    l2UserBalance: BigNumber
+    l1GatewayBalance: BigNumber
+    sequencerBalance: BigNumber
+  }> => {
+    const l1UserBalance = BigNumber.from(
+      await l1Provider.send('eth_getBalance', [l1Wallet.address])
+    )
+    const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
+    const sequencerBalance = await OVM_ETH.balanceOf(
+      PROXY_SEQUENCER_ENTRYPOINT_ADDRESS
+    )
+    const l1GatewayBalance = BigNumber.from(
+      await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
+    )
+    return {
+      l1UserBalance,
+      l2UserBalance,
+      l1GatewayBalance,
+      sequencerBalance,
     }
+  }
 
   before(async () => {
     const system = await getEnvironment()
@@ -74,9 +80,11 @@ describe('Fee Payment Integration Tests', async () => {
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
         gasLimit: '0x100000',
-        gasPrice: 0
+        gasPrice: 0,
       }),
-      watcher, l1Provider, l2Provider
+      watcher,
+      l1Provider,
+      l2Provider
     )
   })
 
@@ -92,7 +100,7 @@ describe('Fee Payment Integration Tests', async () => {
       0,
       {
         gasPrice,
-        gasLimit
+        gasLimit,
       }
     )
     await res.wait()
@@ -102,16 +110,9 @@ describe('Fee Payment Integration Tests', async () => {
     expect(res.gasLimit.eq(gasLimit)).to.be.true
 
     const postBalances = await getBalances()
-    const feePaid = preBalances.l2UserBalance.sub(
-      postBalances.l2UserBalance
-    )
+    const feePaid = preBalances.l2UserBalance.sub(postBalances.l2UserBalance)
 
-    expect(
-      feePaid.
-        eq(
-          gasLimit.mul(gasPrice)
-        )
-    ).to.be.true
+    expect(feePaid.eq(gasLimit.mul(gasPrice))).to.be.true
   })
 
   it('sequencer rejects transaction with a non-multiple-of-1M gasPrice', async () => {
@@ -125,7 +126,7 @@ describe('Fee Payment Integration Tests', async () => {
         0,
         {
           gasPrice,
-          gasLimit
+          gasLimit,
         }
       )
       await res.wait()
@@ -137,8 +138,7 @@ describe('Fee Payment Integration Tests', async () => {
       throw new Error('Transaction did not throw as expected')
     }
 
-    expect(
-      err.includes('Gas price must be a multiple of 1,000,000 wei')
-    ).to.be.true
+    expect(err.includes('Gas price must be a multiple of 1,000,000 wei')).to.be
+      .true
   })
 })
