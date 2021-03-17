@@ -6,6 +6,7 @@
   "files": [
     "build/**/*.js"
   ],
+  "prettier": "@eth-optimism/dev/prettier-config",
   "scripts": {
     "all": "yarn clean && yarn build && && yarn test && yarn fix && yarn lint",
     "build": "yarn build:evm && yarn build:ovm && yarn build:ts",
@@ -15,7 +16,7 @@
     "clean": "rimraf build/ && rimraf build-ovm/",
     "lint": "yarn lint:fix && yarn lint:check",
     "lint:check": "tslint --format stylish --project .",
-    "lint:fix": "prettier --config ../../prettier-config.json --write 'test/**/*.ts'",
+    "lint:fix": "prettier --write 'test/**/*.ts'",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
     "ci": "yarn test"
   },
