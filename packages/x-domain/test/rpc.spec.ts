@@ -10,8 +10,7 @@ import { expect } from './setup'
 import { ethers } from 'ethers'
 
 /* Imports: Internal */
-import { Config } from '../../../common'
-import { makeRandomHexString } from '../helpers'
+import { Config, sleep } from '../../../common'
 
 // TODO: Move this into its own file.
 const DEFAULT_TRANSACTION = {
@@ -32,7 +31,7 @@ describe('Basic RPC tests', () => {
   beforeEach(async () => {
     // Generate a new random wallet before each test. Otherwise we'll run into stateful issues with
     // nonces and whatnot.
-    wallet = new ethers.Wallet(makeRandomHexString(64), provider)
+    wallet = ethers.Wallet.createRandom().connect(provider)
   })
 
   describe('eth_sendRawTransaction', () => {
@@ -45,8 +44,6 @@ describe('Basic RPC tests', () => {
       const result = await wallet.sendTransaction(tx)
       await result.wait()
 
-      // "from" is calculated client side here, so
-      // make sure that it is computed correctly.
       expect(result.from).to.equal(wallet.address)
       expect(result.nonce).to.equal(tx.nonce)
       expect(result.gasLimit.toNumber()).to.equal(tx.gasLimit)
@@ -119,6 +116,28 @@ describe('Basic RPC tests', () => {
     })
   })
 
+  describe('eth_getBlockByNumber', () => {
+    // There was a bug that causes transactions to be reingested over
+    // and over again only when a single transaction was in the
+    // canonical transaction chain. This test catches this by
+    // querying for the latest block and then waits and then queries
+    // the latest block again and then asserts that they are the same.
+    it('should return the same result when new transactions are not applied', async () => {
+      // Get latest block once to start.
+      const prev = await provider.send('eth_getBlockByNumber', ['latest', true])
+
+      // Over ten seconds, repeatedly check the latest block to make sure nothing has changed.
+      for (let i = 0; i < 5; i++) {
+        const latest = await provider.send('eth_getBlockByNumber', [
+          'latest',
+          true,
+        ])
+        await sleep(2000)
+        expect(latest).to.deep.equal(prev)
+      }
+    })
+  })
+
   describe('eth_chainId', () => {
     it('should get the correct chainid', async () => {
       const expected = Config.ChainID()
@@ -137,6 +156,7 @@ describe('Basic RPC tests', () => {
     })
   })
 
+  // TODO: Fix this test when we update how we compute gas estimates.
   describe('eth_estimateGas', () => {
     it('should return block gas limit minus one', async () => {
       // We currently fix gas price to TargetGasLimit-1
@@ -154,16 +174,4 @@ describe('Basic RPC tests', () => {
       }
     })
   })
-
-  // // There was a bug that causes transactions to be reingested over
-  // // and over again only when a single transaction was in the
-  // // canonical transaction chain. This test catches this by
-  // // querying for the latest block and then waits and then queries
-  // // the latest block again and then asserts that they are the same.
-  // it('should not reingest transactions', async () => {
-  //   const one = await provider.getBlockWithTransactions('latest')
-  //   await sleep(2000)
-  //   const two = await provider.getBlockWithTransactions('latest')
-  //   assert.deepEqual(one, two)
-  // })
 })
