@@ -99,13 +99,13 @@ describe('Basic L1<>L2 Communication', async () => {
     L1CrossDomainMessenger = new Contract(
       l1MessengerAddress,
       await getContractInterface('iOVM_L1CrossDomainMessenger'),
-      l1Provider
+      l1Wallet
     )
 
     L2CrossDomainMessenger = new Contract(
       l2MessengerAddress,
       await getContractInterface('iOVM_L2CrossDomainMessenger'),
-      l2Provider
+      l2Wallet
     )
   })
 
