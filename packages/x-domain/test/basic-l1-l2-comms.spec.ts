@@ -119,7 +119,7 @@ describe('Basic L1<>L2 Communication', async () => {
     )
     expect(await L1SimpleStorage.xDomainSender()).to.equal(l2Wallet.address)
     expect(await L1SimpleStorage.value()).to.equal(value)
-    expect(await L1SimpleStorage.totalCount().toNumber()).to.equal(1)
+    expect((await L1SimpleStorage.totalCount()).toNumber()).to.equal(1)
   })
 
   it('should deposit from L1 -> L2', async () => {
@@ -142,11 +142,11 @@ describe('Basic L1<>L2 Communication', async () => {
     )
     await watcher.getL2TransactionReceipt(messageHashes[0])
 
-    expect(await L1SimpleStorage.msgSender()).to.equal(
+    expect(await L2SimpleStorage.msgSender()).to.equal(
       L2CrossDomainMessenger.address
     )
-    expect(await L1SimpleStorage.xDomainSender()).to.equal(l1Wallet.address)
-    expect(await L1SimpleStorage.value()).to.equal(value)
-    expect(await L1SimpleStorage.totalCount().toNumber()).to.equal(1)
+    expect(await L2SimpleStorage.xDomainSender()).to.equal(l1Wallet.address)
+    expect(await L2SimpleStorage.value()).to.equal(value)
+    expect((await L2SimpleStorage.totalCount()).toNumber()).to.equal(1)
   })
 })
