@@ -43,7 +43,7 @@ export class Config {
   }
 
   public static L2NodeUrlWithPort(): string {
-    if (process.env.L1_NODE_WEB3_URL === undefined) {
+    if (process.env.L2_NODE_WEB3_URL === undefined) {
       throw new Error('L2_NODE_WEB3_URL is undefined')
     }
     return process.env.L2_NODE_WEB3_URL
