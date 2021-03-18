@@ -11,44 +11,6 @@ import { Config } from '../../../common'
 import l1SimpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 
-const deposit = async (
-  watcher: Watcher,
-  L1CrossDomainMessenger: Contract,
-  target: string,
-  calldata: string,
-  gasLimit: number
-) => {
-  const transaction = await L1CrossDomainMessenger.sendMessage(
-    target,
-    calldata,
-    gasLimit,
-    { gasLimit: 7000000 }
-  )
-  await transaction.wait()
-
-  const messageHashes = await watcher.getMessageHashesFromL1Tx(transaction.hash)
-  return watcher.getL2TransactionReceipt(messageHashes[0])
-}
-
-const withdraw = async (
-  watcher: Watcher,
-  L2CrossDomainMessenger: Contract,
-  target: string,
-  calldata: string,
-  gasLimit: number
-) => {
-  const transaction = await L2CrossDomainMessenger.sendMessage(
-    target,
-    calldata,
-    gasLimit,
-    { gasLimit: 7000000 }
-  )
-  await transaction.wait()
-
-  const messageHashes = await watcher.getMessageHashesFromL2Tx(transaction.hash)
-  return watcher.getL1TransactionReceipt(messageHashes[0])
-}
-
 describe('Basic L1<>L2 Communication', async () => {
   const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
   const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
@@ -75,14 +37,14 @@ describe('Basic L1<>L2 Communication', async () => {
   let Factory__L2SimpleStorage: ContractFactory
   before(() => {
     Factory__L1SimpleStorage = new ContractFactory(
-      l2SimpleStorageJson.abi,
-      l2SimpleStorageJson.bytecode,
-      l2Wallet
-    )
-    Factory__L2SimpleStorage = new ContractFactory(
       l1SimpleStorageJson.abi,
       l1SimpleStorageJson.bytecode,
       l1Wallet
+    )
+    Factory__L2SimpleStorage = new ContractFactory(
+      l2SimpleStorageJson.abi,
+      l2SimpleStorageJson.bytecode,
+      l2Wallet
     )
   })
 
@@ -132,16 +94,25 @@ describe('Basic L1<>L2 Communication', async () => {
     await L2SimpleStorage.deployTransaction.wait()
   })
 
-  it('should withdraw from L2->L1', async () => {
+  it('should withdraw from L2 -> L1', async () => {
     const value = `0x${'77'.repeat(32)}`
 
-    await withdraw(
-      watcher,
-      L2CrossDomainMessenger,
+    // Send L2 -> L1 message.
+    const transaction = await L2CrossDomainMessenger.sendMessage(
       L1SimpleStorage.address,
       L1SimpleStorage.interface.encodeFunctionData('setValue', [value]),
-      5000000
+      5000000,
+      { gasLimit: 7000000 }
     )
+
+    // Wait for the L2 transaction to be mined.
+    await transaction.wait()
+
+    // Wait for the transaction to be relayed on L1.
+    const messageHashes = await watcher.getMessageHashesFromL2Tx(
+      transaction.hash
+    )
+    await watcher.getL1TransactionReceipt(messageHashes[0])
 
     expect(await L1SimpleStorage.msgSender()).to.equal(
       L1CrossDomainMessenger.address
@@ -151,16 +122,25 @@ describe('Basic L1<>L2 Communication', async () => {
     expect(await L1SimpleStorage.totalCount().toNumber()).to.equal(1)
   })
 
-  it('should deposit from L1->L2', async () => {
+  it('should deposit from L1 -> L2', async () => {
     const value = `0x${'42'.repeat(32)}`
 
-    await deposit(
-      watcher,
-      L1CrossDomainMessenger,
+    // Send L1 -> L2 message.
+    const transaction = await L1CrossDomainMessenger.sendMessage(
       L2SimpleStorage.address,
       L2SimpleStorage.interface.encodeFunctionData('setValue', [value]),
-      5000000
+      5000000,
+      { gasLimit: 7000000 }
     )
+
+    // Wait for the L1 transaction to be mined.
+    await transaction.wait()
+
+    // Wait for the transaction to be included on L2.
+    const messageHashes = await watcher.getMessageHashesFromL1Tx(
+      transaction.hash
+    )
+    await watcher.getL2TransactionReceipt(messageHashes[0])
 
     expect(await L1SimpleStorage.msgSender()).to.equal(
       L2CrossDomainMessenger.address
