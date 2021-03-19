@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@eth-optimism/contracts": "^0.1.9",
-    "@eth-optimism/solc": "^0.5.16-alpha.6",
+    "@eth-optimism/solc": "^0.7.6-alpha.1",
     "@eth-optimism/watcher": "0.0.1-alpha.6",
     "@ethersproject/providers": "^5.0.7",
     "bignumber.js": "^9.0.0",
@@ -55,7 +55,7 @@
     "debug": "^4.2.0",
     "dotenv": "^8.2.0",
     "level": "^6.0.0",
-    "solc": "^0.5.16",
+    "solc": "^0.7.6",
     "typescript": "^4.0.3"
   }
 }
