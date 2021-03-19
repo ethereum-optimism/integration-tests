@@ -1,5 +1,4 @@
-import assert = require('assert')
-import { Config, sleep } from '../../../common'
+import { Config, sleep, expect } from '../../../common'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { getContractFactory } from '@eth-optimism/contracts'
 
@@ -8,12 +7,11 @@ import OVMMulticallArtifact = require('../../../contracts/build-ovm/OVMMulticall
 import { Contract, ContractFactory, Wallet, BigNumber } from 'ethers'
 
 /**
- * `block.number` of a L1 -> L2 transaction must be the same blocknumber
- * on L2 as the L1 blocknumber. `block.timestamp` must be the same timestamp
- * on L2 as the L1 timestamp
+ * These tests cover the OVM execution contexts. In the OVM execution
+ * of a L1 to L2 transaction, both `block.number` and `block.timestamp`
+ * must be equal to the blocknumber/timestamp of the L1 transaction.
  */
-
-describe('OVM Context', () => {
+describe('OVM Context: Layer 2 EVM Context', () => {
   let address: string
   let CanonicalTransactionChain: Contract
   let OVMMulticall: Contract
@@ -57,7 +55,7 @@ describe('OVM Context', () => {
     await OVMMulticall.deployTransaction.wait()
   })
 
-  it('Enqueue: `block.number` and `block.timestamp`', async () => {
+  it('Enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
     for (let i = 0; i < 5; i++) {
       const l2Tip = await l2Provider.getBlock('latest')
       const tx = await CanonicalTransactionChain.enqueue(OVMContextStorage.address, 500_000, '0x')
@@ -74,7 +72,7 @@ describe('OVM Context', () => {
       // Get the receipt
       const receipt = await tx.wait()
       // The transaction did not revert
-      assert.equal(receipt.status, 1)
+      expect(receipt.status).to.equal(1)
 
       // Get the L1 block that the enqueue transaction was in so that
       // the timestamp can be compared against the layer two contract
@@ -84,15 +82,22 @@ describe('OVM Context', () => {
       // and `block.timestamp` in a mapping based on an index that
       // increments each time that there is a transaction.
       const blockNumber = await OVMContextStorage.blockNumbers(i)
-      assert.deepEqual(receipt.blockNumber, blockNumber.toNumber())
+      expect(receipt.blockNumber).to.deep.equal(blockNumber.toNumber())
       const timestamp = await OVMContextStorage.timestamps(i)
-      assert.deepEqual(block.timestamp, timestamp.toNumber())
+      expect(block.timestamp).to.deep.equal(timestamp.toNumber())
     }
   })
 
+  /**
+   * `rollup_getInfo` is a new RPC endpoint that is used to return the OVM
+   * context. The data returned should match what is actually being used as the
+   * OVM context.
+   */
+
   it('should return same timestamp and blocknumbers between `eth_call` and `rollup_getInfo`', async () => {
     // As atomically as possible, call `rollup_getInfo` and OVMMulticall for the
-    // blocknumber and timestamp
+    // blocknumber and timestamp. If this is not atomic, then the sequencer can
+    // happend to update the timestamp between the `eth_call` and the `rollup_getInfo`
     const [info, [, returnData]] = await Promise.all([
       l2Provider.send('rollup_getInfo', []),
       OVMMulticall.callStatic.aggregate([
@@ -105,7 +110,7 @@ describe('OVM Context', () => {
     const blockNumber = BigNumber.from(returnData[1])
 
     // TODO: this is a bug and needs to be fixed
-    //assert.deepEqual(info.ethContext.blockNumber, blockNumber.toNumber())
-    assert.deepEqual(info.ethContext.timestamp, timestamp.toNumber())
+    //expect(info.ethContext.blockNumber).to.deep.equal(blockNumber.toNumber())
+    expect(info.ethContext.timestamp).to.deep.equal(timestamp.toNumber())
   })
 })
