@@ -5,7 +5,7 @@ pragma solidity >0.6.0 <0.8.0;
  * @title ERC20
  * @dev A super simple ERC20 implementation!
  */
-contract ERC20 {
+contract ChainlinkERC20 {
 
     /**********
      * Events *

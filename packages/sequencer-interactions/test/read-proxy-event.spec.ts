@@ -6,7 +6,7 @@ import { Contract, ContractFactory, Wallet } from 'ethers'
 
 /* Imports: Internal */
 import { Config } from '../../../common'
-import ERC20ABI = require('../../../contracts/build-ovm/ERC20.json')
+import ERC20ABI = require('../../../contracts/build-ovm/ChainlinkERC20.json')
 import UpgradeableProxyABI = require('../../../contracts/build-ovm/UpgradeableProxy.json')
 
 describe('Reading events from proxy contracts', () => {

@@ -7,6 +7,8 @@ import { JsonRpcProvider, Provider } from '@ethersproject/providers'
 chai.use(chaiAsPromised)
 const should = chai.should()
 
+export const expect = chai.expect
+
 // Load up env variables if running locally
 if (process.env.NODE_ENV === 'local') {
   const envPath = path.join(__dirname, '/.env');
