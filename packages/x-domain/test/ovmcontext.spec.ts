@@ -38,18 +38,24 @@ describe('OVM Context: Layer 2 EVM Context', () => {
 
     const addressResolverAddress = Config.AddressResolverAddress()
     const AddressResolverFactory = getContractFactory('Lib_AddressManager')
-    const addressResolver = AddressResolverFactory
-      .attach(addressResolverAddress)
-      .connect(l1Provider)
-    const ctcAddress = await addressResolver.getAddress('OVM_CanonicalTransactionChain')
-    const CanonicalTransactionChainFactory = getContractFactory('OVM_CanonicalTransactionChain')
+    const addressResolver = AddressResolverFactory.attach(
+      addressResolverAddress
+    ).connect(l1Provider)
+    const ctcAddress = await addressResolver.getAddress(
+      'OVM_CanonicalTransactionChain'
+    )
+    const CanonicalTransactionChainFactory = getContractFactory(
+      'OVM_CanonicalTransactionChain'
+    )
 
-    CanonicalTransactionChain = CanonicalTransactionChainFactory.connect(l1Wallet).attach(ctcAddress)
+    CanonicalTransactionChain = CanonicalTransactionChainFactory.connect(
+      l1Wallet
+    ).attach(ctcAddress)
 
     const OVMMulticallFactory = new ContractFactory(
       OVMMulticallArtifact.abi,
       OVMMulticallArtifact.bytecode,
-      l2Wallet,
+      l2Wallet
     )
     OVMMulticall = await OVMMulticallFactory.deploy()
     await OVMMulticall.deployTransaction.wait()
@@ -58,7 +64,11 @@ describe('OVM Context: Layer 2 EVM Context', () => {
   it('Enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
     for (let i = 0; i < 5; i++) {
       const l2Tip = await l2Provider.getBlock('latest')
-      const tx = await CanonicalTransactionChain.enqueue(OVMContextStorage.address, 500_000, '0x')
+      const tx = await CanonicalTransactionChain.enqueue(
+        OVMContextStorage.address,
+        500_000,
+        '0x'
+      )
 
       // Wait for the enqueue to be ingested
       while (true) {
@@ -101,9 +111,15 @@ describe('OVM Context: Layer 2 EVM Context', () => {
     const [info, [, returnData]] = await Promise.all([
       l2Provider.send('rollup_getInfo', []),
       OVMMulticall.callStatic.aggregate([
-        [OVMMulticall.address, OVMMulticall.interface.encodeFunctionData('getCurrentBlockTimestamp')],
-        [OVMMulticall.address, OVMMulticall.interface.encodeFunctionData('getCurrentBlockNumber')]
-      ])
+        [
+          OVMMulticall.address,
+          OVMMulticall.interface.encodeFunctionData('getCurrentBlockTimestamp'),
+        ],
+        [
+          OVMMulticall.address,
+          OVMMulticall.interface.encodeFunctionData('getCurrentBlockNumber'),
+        ],
+      ]),
     ])
 
     const timestamp = BigNumber.from(returnData[0])
