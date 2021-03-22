@@ -31,7 +31,7 @@ There should be a `yarn` script for each package found in `packages`.
 ```bash
 $ yarn test:x-domain
 $ yarn test:tx-ingestion
-$ yarn test:sequencer-interactions
+$ yarn test:third-party-contracts
 ```
 
 The environment variables that are used by this repository can be found in
