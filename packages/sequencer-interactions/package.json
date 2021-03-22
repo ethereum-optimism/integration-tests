@@ -7,7 +7,6 @@
     "build/**/*.js"
   ],
   "scripts": {
-    "all": "yarn clean && && yarn test && yarn fix && yarn lint",
     "lint": "yarn lint:fix && yarn lint:check",
     "lint:check": "tslint --format stylish --project .",
     "lint:fix": "prettier --config ../../prettier-config.json --write 'test/**/*.ts'",
@@ -18,7 +17,6 @@
   "author": "Optimism",
   "license": "MIT",
   "devDependencies": {
-    "@eth-optimism/dev": "^1.1.1",
     "@ethersproject/providers": "^5.0.24",
     "chai": "^4.3.3",
     "ethereum-waffle": "^3.3.0",
