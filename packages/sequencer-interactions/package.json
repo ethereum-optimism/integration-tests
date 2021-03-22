@@ -7,12 +7,7 @@
     "build/**/*.js"
   ],
   "scripts": {
-    "all": "yarn clean && yarn build && && yarn test && yarn fix && yarn lint",
-    "build": "yarn build:evm && yarn build:ovm && yarn build:ts",
-    "build:evm": "waffle ../../waffle-config.evm.js",
-    "build:ovm": "waffle ../../waffle-config.ovm.js",
-    "build:ts": "mkdir -p build && tsc -p .",
-    "clean": "rimraf build/ && rimraf build-ovm/",
+    "all": "yarn clean && && yarn test && yarn fix && yarn lint",
     "lint": "yarn lint:fix && yarn lint:check",
     "lint:check": "tslint --format stylish --project .",
     "lint:fix": "prettier --config ../../prettier-config.json --write 'test/**/*.ts'",
