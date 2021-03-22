@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'path'
 import chai = require('chai')
 import dotenv = require('dotenv')
 import chaiAsPromised = require('chai-as-promised')
@@ -11,14 +11,15 @@ export const expect = chai.expect
 
 // Load up env variables if running locally
 if (process.env.NODE_ENV === 'local') {
-  const envPath = path.join(__dirname, '/.env');
+  const envPath = path.join(__dirname, '/.env')
   dotenv.config({ path: envPath })
 }
 
 // Commonly used test mnemonic
-export const mnemonic = process.env.MNEMONIC ||
+export const mnemonic =
+  process.env.MNEMONIC ||
   'abandon abandon abandon abandon abandon abandon ' +
-  'abandon abandon abandon abandon abandon about'
+    'abandon abandon abandon abandon abandon about'
 
 let l1Provider: Provider
 export const getL1Provider = (): Provider => {
