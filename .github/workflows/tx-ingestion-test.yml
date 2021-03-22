@@ -24,8 +24,8 @@ jobs:
         run: |
           git clone https://github.com/ethereum-optimism/optimism-integration.git \
               $HOME/optimism-integration \
-              --recurse-submodules=./integration-tests \
-              --recurse-submodules=./docker
+              --recurse-submodules=integration-tests \
+              --recurse-submodules=docker
           cd $HOME/optimism-integration
           if [ -z $GITHUB_HEAD_REF ]; then
               GITHUB_HEAD_REF=${GITHUB_REF##*/}
