@@ -1,0 +1,26 @@
+{
+  "name": "@eth-optimism/tests-third-part-contracts",
+  "version": "0.0.1",
+  "description": "[Optimism] Integration Tests: Third Party Contracts",
+  "author": "Optimism PBC",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --show-stack-traces",
+    "lint": "yarn lint:fix && yarn lint:check",
+    "lint:check": "tslint --format stylish --project .",
+    "lint:fix": "prettier --config ../../prettier-config.json --write 'hardhat.config.ts' 'test/**/*.ts'",
+    "test": "hardhat test --show-stack-traces",
+    "ci": "yarn test"
+  },
+  "devDependencies": {
+    "@eth-optimism/plugins": "^0.0.20",
+    "@ethersproject/providers": "^5.0.24",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "chai": "^4.3.3",
+    "ethereum-waffle": "^3.3.0",
+    "ethers": "^5.0.32",
+    "hardhat": "^2.1.1",
+    "mocha": "^8.3.1"
+  }
+}

@@ -2,12 +2,11 @@ import { expect } from 'chai'
 
 /* Imports: External */
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { Contract, ContractFactory, Wallet } from 'ethers'
+import { l2ethers } from 'hardhat'
+import { Contract, Wallet } from 'ethers'
 
 /* Imports: Internal */
-import { Config } from '../../../common'
-import ERC20ABI = require('../../../contracts/build-ovm/ChainlinkERC20.json')
-import UpgradeableProxyABI = require('../../../contracts/build-ovm/UpgradeableProxy.json')
+import { Config } from '../../../../common'
 
 describe('Reading events from proxy contracts', () => {
   let l2Provider: JsonRpcProvider
@@ -19,15 +18,9 @@ describe('Reading events from proxy contracts', () => {
 
   it('should read transfer events from a proxy ERC20', async () => {
     // Set up our contract factories in advance.
-    const Factory__ERC20 = new ContractFactory(
-      ERC20ABI.abi,
-      ERC20ABI.bytecode,
-      l2Wallet
-    )
-    const Factory__UpgradeableProxy = new ContractFactory(
-      [...ERC20ABI.abi, ...UpgradeableProxyABI.abi],
-      UpgradeableProxyABI.bytecode,
-      l2Wallet
+    const Factory__ERC20 = await l2ethers.getContractFactory('ChainlinkERC20')
+    const Factory__UpgradeableProxy = await l2ethers.getContractFactory(
+      'UpgradeableProxy'
     )
 
     // Deploy the underlying ERC20 implementation.
@@ -35,14 +28,21 @@ describe('Reading events from proxy contracts', () => {
     await ERC20.deployTransaction.wait()
 
     // Deploy the upgradeable proxy and execute the init function.
-    const ProxyERC20 = await Factory__UpgradeableProxy.deploy(
+    const UpgradeableProxy = await Factory__UpgradeableProxy.deploy(
       ERC20.address,
       ERC20.interface.encodeFunctionData('init', [
         1000, // initial supply
         'Cool Token Name Goes Here', // token name
       ])
     )
-    await ProxyERC20.deployTransaction.wait()
+    await UpgradeableProxy.deployTransaction.wait()
+
+    // Create a reference to the proxy but with the interface of an ERC20.
+    const ProxyERC20 = new Contract(
+      UpgradeableProxy.address,
+      ERC20.interface,
+      l2Wallet
+    )
 
     // Make two transfers.
     const recipient = '0x0000000000000000000000000000000000000000'
