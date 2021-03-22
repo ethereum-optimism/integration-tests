@@ -1,31 +1,15 @@
 {
   "name": "@eth-optimism/x-domain",
   "version": "0.0.1",
-  "description": "[Optimism] Optimistic Rollup Integration Test Suite",
-  "main": "build/index.js",
-  "files": [
-    "build/**/*.js"
-  ],
+  "description": "[Optimism] Integration Tests: Cross Domain Interactions",
+  "license": "MIT",
+  "author": "Optimism",
   "scripts": {
     "lint": "yarn lint:fix && yarn lint:check",
     "lint:check": "tslint --format stylish --project .",
     "lint:fix": "prettier --config prettier-config.json --write '{helpers,test}/**/*.ts'",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
     "ci": "yarn test"
-  },
-  "keywords": [
-    "ethereum",
-    "client",
-    "optimistic",
-    "rollup",
-    "test"
-  ],
-  "homepage": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests",
-  "license": "MIT",
-  "author": "Optimism",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
   },
   "devDependencies": {
     "@eth-optimism/contracts": "^0.1.9",
@@ -36,10 +20,6 @@
     "chai-as-promised": "^7.1.1",
     "ethereum-waffle": "^3.2.0",
     "ethers": "^5.0.23",
-    "mocha": "^8.3.2",
-    "rimraf": "^2.6.3"
-  },
-  "publishConfig": {
-    "access": "public"
+    "mocha": "^8.3.2"
   }
 }

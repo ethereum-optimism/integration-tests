@@ -1,31 +1,15 @@
 {
   "name": "@eth-optimism/tx-ingestion",
   "version": "0.0.1",
-  "description": "[Optimism] Optimistic Rollup Integration Test Utils",
-  "main": "build/index.js",
-  "files": [
-    "build/**/*.js"
-  ],
+  "description": "[Optimism] Integration Tests: Transaction Ingestion",
+  "license": "MIT",
+  "author": "Optimism",
   "scripts": {
     "lint": "yarn lint:fix && yarn lint:check",
     "lint:check": "tslint --format stylish --project .",
     "lint:fix": "prettier --config prettier-config.json --write 'test/**/*.ts'",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
     "ci": "yarn test"
-  },
-  "keywords": [
-    "ethereum",
-    "client",
-    "optimistic",
-    "rollup",
-    "test"
-  ],
-  "homepage": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests",
-  "license": "MIT",
-  "author": "Optimism",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
   },
   "devDependencies": {
     "@eth-optimism/contracts": "^0.0.2-alpha.7",
@@ -41,8 +25,5 @@
     "ethers": "^5.0.23",
     "mocha": "^8.1.3",
     "rimraf": "^2.6.3"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }
