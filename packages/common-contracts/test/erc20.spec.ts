@@ -68,7 +68,7 @@ describe('ERC20', async () => {
         spender = recipient.address
       })
 
-      function shouldDecreaseApproval(amount: number) {
+      const shouldDecreaseApproval = (amount: number) => {
         describe('when there was no approved amount before', () => {
           it.skip('reverts', async () => {
             await expect(
@@ -191,23 +191,23 @@ describe('ERC20', async () => {
       })
 
       describe('when the sender does not have enough balance', () => {
-        const amount = initialSupply + 1
+        const amount2 = initialSupply + 1
 
         it('emits an approval event', async () => {
-          await expect(TestERC20.increaseAllowance(spender, amount))
+          await expect(TestERC20.increaseAllowance(spender, amount2))
             .to.emit(TestERC20, 'Approval')
-            .withArgs(initialHolder.address, spender, amount)
+            .withArgs(initialHolder.address, spender, amount2)
         })
 
         describe('when there was no approved amount before', () => {
           it('approves the requested amount', async () => {
-            await TestERC20.increaseAllowance(spender, amount)
+            await TestERC20.increaseAllowance(spender, amount2)
 
             expect(
               (
                 await TestERC20.allowance(initialHolder.address, spender)
               ).toNumber()
-            ).to.equal(amount)
+            ).to.equal(amount2)
           })
         })
 
@@ -217,7 +217,7 @@ describe('ERC20', async () => {
           })
 
           it('increases the spender allowance adding the requested amount', async () => {
-            await TestERC20.increaseAllowance(spender, amount)
+            await TestERC20.increaseAllowance(spender, amount2)
 
             expect(
               (
@@ -464,7 +464,7 @@ describe('ERC20', async () => {
         ).to.be.revertedWith('ERC20: burn amount exceeds balance')
       })
 
-      const describeBurn = function (description: string, amount: number) {
+      const describeBurn = (description: string, amount: number) => {
         describe(description, () => {
           beforeEach('burning', async () => {
             const tx = await TestERC20.burn(initialHolder.address, amount)
