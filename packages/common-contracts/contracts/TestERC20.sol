@@ -17,4 +17,22 @@ contract TestERC20 is ERC20 {
     {
         _mint(msg.sender, _initialSupply);
     }
+
+    function mint(
+        address _account,
+        uint256 _amount
+    )
+        public
+    {
+        _mint(_account, _amount);
+    }
+
+    function burn(
+        address _account,
+        uint256 _amount
+    )
+        public
+    {
+        _burn(_account, _amount);
+    }
 }

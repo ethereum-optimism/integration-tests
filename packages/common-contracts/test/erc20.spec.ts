@@ -72,10 +72,7 @@ describe('ERC20', async () => {
         describe('when there was no approved amount before', () => {
           it.skip('reverts', async () => {
             await expect(
-              TestERC20.connect(initialHolder).decreaseAllowance(
-                spender,
-                amount
-              )
+              TestERC20.decreaseAllowance(spender, amount)
             ).to.be.revertedWith('ERC20: decreased allowance below zero')
           })
         })
@@ -84,30 +81,19 @@ describe('ERC20', async () => {
           const approvedAmount = amount
 
           beforeEach(async () => {
-            const tx = await TestERC20.connect(initialHolder).approve(
-              spender,
-              approvedAmount
-            )
+            const tx = await TestERC20.approve(spender, approvedAmount)
             await sleep(100)
             await tx.wait()
           })
 
           it('emits an approval event', async () => {
-            await expect(
-              TestERC20.connect(initialHolder).decreaseAllowance(
-                spender,
-                approvedAmount
-              )
-            )
+            await expect(TestERC20.decreaseAllowance(spender, approvedAmount))
               .to.emit(TestERC20, 'Approval')
               .withArgs(initialHolder.address, spender, 0)
           })
 
           it('decreases the spender allowance subtracting the requested amount', async () => {
-            await TestERC20.connect(initialHolder).decreaseAllowance(
-              spender,
-              approvedAmount - 1
-            )
+            await TestERC20.decreaseAllowance(spender, approvedAmount - 1)
 
             expect(
               (
@@ -117,10 +103,7 @@ describe('ERC20', async () => {
           })
 
           it('sets the allowance to zero when all allowance is removed', async () => {
-            await TestERC20.connect(initialHolder).decreaseAllowance(
-              spender,
-              approvedAmount
-            )
+            await TestERC20.decreaseAllowance(spender, approvedAmount)
 
             expect(
               (
@@ -131,10 +114,7 @@ describe('ERC20', async () => {
 
           it.skip('reverts when more than the full allowance is removed', async () => {
             await expect(
-              TestERC20.connect(initialHolder).decreaseAllowance(
-                spender,
-                approvedAmount + 1
-              )
+              TestERC20.decreaseAllowance(spender, approvedAmount + 1)
             ).to.be.revertedWith('ERC20: decreased allowance below zero')
           })
         })
@@ -159,7 +139,7 @@ describe('ERC20', async () => {
 
       it.skip('reverts', async () => {
         await expect(
-          TestERC20.connect(initialHolder).decreaseAllowance(spender, amount)
+          TestERC20.decreaseAllowance(spender, amount)
         ).to.be.revertedWith('ERC20: decreased allowance below zero')
       })
     })
@@ -176,19 +156,14 @@ describe('ERC20', async () => {
 
       describe('when the sender has enough balance', () => {
         it('emits an approval event', async () => {
-          await expect(
-            TestERC20.connect(initialHolder).increaseAllowance(spender, amount)
-          )
+          await expect(TestERC20.increaseAllowance(spender, amount))
             .to.emit(TestERC20, 'Approval')
             .withArgs(initialHolder.address, spender, amount)
         })
 
         describe('when there was no approved amount before', () => {
           it('approves the requested amount', async () => {
-            await TestERC20.connect(initialHolder).increaseAllowance(
-              spender,
-              amount
-            )
+            await TestERC20.increaseAllowance(spender, amount)
 
             expect(
               (
@@ -200,14 +175,11 @@ describe('ERC20', async () => {
 
         describe('when the spender had an approved amount', () => {
           beforeEach(async () => {
-            await TestERC20.connect(initialHolder).approve(spender, 1)
+            await TestERC20.approve(spender, 1)
           })
 
           it('increases the spender allowance adding the requested amount', async () => {
-            await TestERC20.connect(initialHolder).increaseAllowance(
-              spender,
-              amount
-            )
+            await TestERC20.increaseAllowance(spender, amount)
 
             expect(
               (
@@ -222,19 +194,14 @@ describe('ERC20', async () => {
         const amount = initialSupply + 1
 
         it('emits an approval event', async () => {
-          await expect(
-            TestERC20.connect(initialHolder).increaseAllowance(spender, amount)
-          )
+          await expect(TestERC20.increaseAllowance(spender, amount))
             .to.emit(TestERC20, 'Approval')
             .withArgs(initialHolder.address, spender, amount)
         })
 
         describe('when there was no approved amount before', () => {
           it('approves the requested amount', async () => {
-            await TestERC20.connect(initialHolder).increaseAllowance(
-              spender,
-              amount
-            )
+            await TestERC20.increaseAllowance(spender, amount)
 
             expect(
               (
@@ -246,14 +213,11 @@ describe('ERC20', async () => {
 
         describe('when the spender had an approved amount', () => {
           beforeEach(async () => {
-            await TestERC20.connect(initialHolder).approve(spender, 1)
+            await TestERC20.approve(spender, 1)
           })
 
           it('increases the spender allowance adding the requested amount', async () => {
-            await TestERC20.connect(initialHolder).increaseAllowance(
-              spender,
-              amount
-            )
+            await TestERC20.increaseAllowance(spender, amount)
 
             expect(
               (
@@ -270,7 +234,7 @@ describe('ERC20', async () => {
 
       it.skip('reverts', async () => {
         await expect(
-          TestERC20.connect(initialHolder).increaseAllowance(spender, amount)
+          TestERC20.increaseAllowance(spender, amount)
         ).to.be.revertedWith('ERC20: approve to the zero address')
       })
     })
@@ -283,7 +247,7 @@ describe('ERC20', async () => {
 
         it.skip('reverts', async () => {
           await expect(
-            TestERC20.connect(initialHolder).transfer(recipient.address, amount)
+            TestERC20.transfer(recipient.address, amount)
           ).to.be.revertedWith('ERC20: transfer amount exceeds balance')
         })
       })
@@ -292,10 +256,7 @@ describe('ERC20', async () => {
         const amount = initialSupply
 
         it('transfers the requested amount', async () => {
-          await TestERC20.connect(initialHolder).transfer(
-            recipient.address,
-            amount
-          )
+          await TestERC20.transfer(recipient.address, amount)
 
           expect(
             (await TestERC20.balanceOf(initialHolder.address)).toNumber()
@@ -306,9 +267,7 @@ describe('ERC20', async () => {
         })
 
         it('emits a transfer event', async () => {
-          await expect(
-            TestERC20.connect(initialHolder).transfer(recipient.address, amount)
-          )
+          await expect(TestERC20.transfer(recipient.address, amount))
             .to.emit(TestERC20, 'Transfer')
             .withArgs(initialHolder.address, recipient.address, amount)
         })
@@ -318,10 +277,7 @@ describe('ERC20', async () => {
         const amount = 0
 
         it('transfers the requested amount', async () => {
-          await TestERC20.connect(initialHolder).transfer(
-            recipient.address,
-            amount
-          )
+          await TestERC20.transfer(recipient.address, amount)
 
           expect(
             (await TestERC20.balanceOf(initialHolder.address)).toNumber()
@@ -332,9 +288,7 @@ describe('ERC20', async () => {
         })
 
         it('emits a transfer event', async () => {
-          await expect(
-            TestERC20.connect(initialHolder).transfer(recipient.address, amount)
-          )
+          await expect(TestERC20.transfer(recipient.address, amount))
             .to.emit(TestERC20, 'Transfer')
             .withArgs(initialHolder.address, recipient.address, amount)
         })
@@ -344,10 +298,7 @@ describe('ERC20', async () => {
     describe('when the recipient is the zero address', () => {
       it.skip('reverts', async () => {
         await expect(
-          TestERC20.connect(initialHolder).transfer(
-            ethers.constants.AddressZero,
-            initialSupply
-          )
+          TestERC20.transfer(ethers.constants.AddressZero, initialSupply)
         ).to.be.revertedWith('ERC20: transfer to the zero address')
       })
     })
@@ -359,19 +310,14 @@ describe('ERC20', async () => {
         const amount = initialSupply
 
         it('emits an approval event', async () => {
-          await expect(
-            TestERC20.connect(initialHolder).approve(recipient.address, amount)
-          )
+          await expect(TestERC20.approve(recipient.address, amount))
             .to.emit(TestERC20, 'Approval')
             .withArgs(initialHolder.address, recipient.address, amount)
         })
 
         describe('when there was no approved amount before', () => {
           it('approves the requested amount', async () => {
-            await TestERC20.connect(initialHolder).approve(
-              recipient.address,
-              amount
-            )
+            await TestERC20.approve(recipient.address, amount)
 
             expect(
               (
@@ -467,6 +413,95 @@ describe('ERC20', async () => {
           )
         ).to.be.revertedWith('ERC20: approve to the zero address')
       })
+    })
+  })
+
+  describe('_mint', () => {
+    const amount = 50
+    it.skip('rejects a null account', async () => {
+      await expect(
+        TestERC20.mint(ethers.constants.AddressZero, amount)
+      ).to.be.revertedWith('ERC20: mint to the zero address')
+    })
+
+    describe('for a non zero account', () => {
+      beforeEach('minting', async () => {
+        await TestERC20.mint(recipient.address, amount)
+      })
+
+      it('increments totalSupply', async () => {
+        const expectedSupply = initialSupply + amount
+        expect((await TestERC20.totalSupply()).toNumber()).to.equal(
+          expectedSupply
+        )
+      })
+
+      it('increments recipient balance', async () => {
+        expect(
+          (await TestERC20.balanceOf(recipient.address)).toNumber()
+        ).to.equal(amount)
+      })
+
+      it('emits Transfer event', async () => {
+        await expect(TestERC20.mint(recipient.address, amount))
+          .to.emit(TestERC20, 'Transfer')
+          .withArgs(ethers.constants.AddressZero, recipient.address, amount)
+      })
+    })
+  })
+
+  describe('_burn', () => {
+    it.skip('rejects a null account', async () => {
+      await expect(
+        TestERC20.burn(ethers.constants.AddressZero, 1)
+      ).to.be.revertedWith('ERC20: burn from the zero address')
+    })
+
+    describe('for a non zero account', () => {
+      it.skip('rejects burning more than balance', async () => {
+        await expect(
+          TestERC20.burn(ethers.constants.AddressZero, initialSupply + 1)
+        ).to.be.revertedWith('ERC20: burn amount exceeds balance')
+      })
+
+      const describeBurn = function (description: string, amount: number) {
+        describe(description, () => {
+          beforeEach('burning', async () => {
+            const tx = await TestERC20.burn(initialHolder.address, amount)
+            await sleep(100)
+            await tx.wait()
+          })
+
+          it('decrements totalSupply', async () => {
+            const expectedSupply = initialSupply - amount
+            expect((await TestERC20.totalSupply()).toNumber()).to.equal(
+              expectedSupply
+            )
+          })
+
+          it('decrements initialHolder balance', async () => {
+            const expectedBalance = initialSupply - amount
+            expect(
+              (await TestERC20.balanceOf(initialHolder.address)).toNumber()
+            ).to.equal(expectedBalance)
+          })
+        })
+
+        describe(description, () => {
+          it('emits Transfer event', async () => {
+            await expect(TestERC20.burn(initialHolder.address, amount))
+              .to.emit(TestERC20, 'Transfer')
+              .withArgs(
+                initialHolder.address,
+                ethers.constants.AddressZero,
+                amount
+              )
+          })
+        })
+      }
+
+      describeBurn('for entire balance', initialSupply)
+      describeBurn('for less amount than balance', initialSupply - 1)
     })
   })
 })
