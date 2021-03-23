@@ -1,0 +1,38 @@
+name: Setup & Run Integration Tests (common-contracts)
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Setup & Run Integration Tests (common-contracts)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_READ }}
+
+      - name: Build
+        run: |
+          git clone https://github.com/ethereum-optimism/optimism-integration.git \
+              $HOME/optimism-integration \
+              --recurse-submodules=integration-tests \
+              --recurse-submodules=docker
+          cd $HOME/optimism-integration
+          if [ -z $GITHUB_HEAD_REF ]; then
+              GITHUB_HEAD_REF=${GITHUB_REF##*/}
+          fi
+          ./docker/build.sh -s integration-tests -b $GITHUB_HEAD_REF
+
+      - name: Test
+        run: |
+          cd $HOME/optimism-integration
+          PKGS=common-contracts INTEGRATION_TESTS_TAG=$GITHUB_HEAD_REF ./test.sh
