@@ -32,6 +32,7 @@ There should be a `yarn` script for each package found in `packages`.
 $ yarn test:x-domain
 $ yarn test:tx-ingestion
 $ yarn test:sequencer-interactions
+$ yarn test:synthetix
 ```
 
 The environment variables that are used by this repository can be found in
