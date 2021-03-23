@@ -352,4 +352,121 @@ describe('ERC20', async () => {
       })
     })
   })
+
+  describe('approve', () => {
+    describe('when the spender is not the zero address', () => {
+      describe('when the sender has enough balance', () => {
+        const amount = initialSupply
+
+        it('emits an approval event', async () => {
+          await expect(
+            TestERC20.connect(initialHolder).approve(recipient.address, amount)
+          )
+            .to.emit(TestERC20, 'Approval')
+            .withArgs(initialHolder.address, recipient.address, amount)
+        })
+
+        describe('when there was no approved amount before', () => {
+          it('approves the requested amount', async () => {
+            await TestERC20.connect(initialHolder).approve(
+              recipient.address,
+              amount
+            )
+
+            expect(
+              (
+                await TestERC20.allowance(
+                  initialHolder.address,
+                  recipient.address
+                )
+              ).toNumber()
+            ).to.equal(amount)
+          })
+        })
+
+        describe('when the spender had an approved amount', () => {
+          beforeEach(async () => {
+            await TestERC20.connect(initialHolder).approve(recipient.address, 1)
+          })
+
+          it('approves the requested amount and replaces the previous one', async () => {
+            await TestERC20.connect(initialHolder).approve(
+              recipient.address,
+              amount
+            )
+
+            expect(
+              (
+                await TestERC20.allowance(
+                  initialHolder.address,
+                  recipient.address
+                )
+              ).toNumber()
+            ).to.equal(amount)
+          })
+        })
+      })
+
+      describe('when the sender does not have enough balance', () => {
+        const amount = initialSupply + 1
+
+        it('emits an approval event', async () => {
+          await expect(
+            TestERC20.connect(initialHolder).approve(recipient.address, amount)
+          )
+            .to.emit(TestERC20, 'Approval')
+            .withArgs(initialHolder.address, recipient.address, amount)
+        })
+
+        describe('when there was no approved amount before', () => {
+          it('approves the requested amount', async () => {
+            await TestERC20.connect(initialHolder).approve(
+              recipient.address,
+              amount
+            )
+            expect(
+              (
+                await TestERC20.allowance(
+                  initialHolder.address,
+                  recipient.address
+                )
+              ).toNumber()
+            ).to.equal(amount)
+          })
+        })
+
+        describe('when the spender had an approved amount', () => {
+          beforeEach(async () => {
+            await TestERC20.connect(initialHolder).approve(recipient.address, 1)
+          })
+
+          it('approves the requested amount and replaces the previous one', async () => {
+            await TestERC20.connect(initialHolder).approve(
+              recipient.address,
+              amount
+            )
+            expect(
+              (
+                await TestERC20.allowance(
+                  initialHolder.address,
+                  recipient.address
+                )
+              ).toNumber()
+            ).to.equal(amount)
+          })
+        })
+      })
+    })
+
+    describe('when the spender is the zero address', () => {
+      it.skip('reverts', async () => {
+        await expect(
+          TestERC20.connect(initialHolder).approve(
+            ethers.constants.AddressZero,
+            initialSupply
+          )
+        ).to.be.revertedWith('ERC20: approve to the zero address')
+      })
+    })
+  })
 })
