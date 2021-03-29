@@ -13,11 +13,10 @@ import {
   verifyL2Deposits,
   verifyL2Txs,
 } from '../helpers'
-import {
-  JsonRpcProvider,
-} from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
+import { Logger } from '@eth-optimism/core-utils'
 
 import { getContractInterface } from '@eth-optimism/contracts'
 
@@ -38,6 +37,7 @@ const AddressManager = new Contract(
 )
 
 describe('Deposit Load Test', async () => {
+  const logger = new Logger({ name: 'load-test' })
   const numDepositsToSend = 10
   const numTxsToSend = 15
   let l2DepositTracker: Contract
@@ -53,6 +53,7 @@ describe('Deposit Load Test', async () => {
     } = await deployLoadTestContracts(
       l1Wallet,
       l2Wallet,
+      logger,
       L2_DEPOSIT_TRACKER_ADDRESS,
       L1_DEPOSIT_INITIATOR_ADDRESS,
       L2_TX_STORAGE_ADDRESS
@@ -60,7 +61,7 @@ describe('Deposit Load Test', async () => {
     ctcAddress = await AddressManager.getAddress(
       'OVM_CanonicalTransactionChain'
     )
-    console.log('L1 CTC address:', ctcAddress)
+    logger.info(`L1 CTC address: ${ctcAddress}`)
   })
 
   it('should perform deposits and L2 transactions', async () => {
@@ -70,26 +71,29 @@ describe('Deposit Load Test', async () => {
         ctcAddress,
         l2DepositTracker.address,
         numDepositsToSend,
-        l1Wallet
+        l1Wallet,
+        logger
       ),
-      spamL2Txs(l2TxStorage, numTxsToSend, l2Wallet),
+      spamL2Txs(l2TxStorage, numTxsToSend, l2Wallet, logger),
     ]
     await Promise.all(tasks)
-    console.log('done sending txs, sleeping for 2 minutes...')
+    logger.info('done sending txs, sleeping for 2 minutes...')
     await sleep(1000 * 60 * 2)
   }).timeout(0)
 
   it('should perform deposits and L2 transactions', async () => {
     const actualIndexes = await verifyL1Deposits(
       l1DepositInitiator,
-      l1Wallet.address
+      l1Wallet.address,
+      logger
     )
     await verifyL2Deposits(
       l1DepositInitiator,
       l2DepositTracker,
       l1Wallet.address,
-      actualIndexes
+      actualIndexes,
+      logger
     )
-    await verifyL2Txs(l2TxStorage)
+    await verifyL2Txs(l2TxStorage, logger)
   }).timeout(0)
 })

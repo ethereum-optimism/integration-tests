@@ -6,57 +6,61 @@ import L1DepositInitiator = require('../../contracts/build/L1DepositInitiator.js
 import L2TxStorage = require('../../contracts/build-ovm/L2TxStorage.json')
 import { Contract } from '@ethersproject/contracts'
 import { Wallet } from '@ethersproject/wallet'
+import { Logger } from '@eth-optimism/core-utils'
 
 export const deployLoadTestContracts = async (
   l1Wallet: Wallet,
   l2Wallet: Wallet,
+  logger: Logger,
   L2_DEPOSIT_TRACKER_ADDRESS?: string,
   L1_DEPOSIT_INITIATOR_ADDRESS?: string,
-  L2_TX_STORAGE_ADDRESS?: string,
+  L2_TX_STORAGE_ADDRESS?: string
 ) => {
   let l2DepositTracker
   let l1DepositInitiator
   let l2TxStorage
-  console.log('connected to L2 wallet at:', l2Wallet.address)
-  console.log('connected to L1 wallet at:', l1Wallet.address)
+  logger.info(`connected to L2 wallet at: ${l2Wallet.address}`)
+  logger.info(`connected to L1 wallet at: ${l1Wallet.address}`)
   if (!L2_DEPOSIT_TRACKER_ADDRESS) {
     l2DepositTracker = await deployContract(l2Wallet, L2DepositTracker)
-    console.log('l2DepositTracker address on L2:', l2DepositTracker.address)
+    logger.info(`l2DepositTracker address on L2: ${l2DepositTracker.address}`)
   } else {
     l2DepositTracker = new Contract(
       L2_DEPOSIT_TRACKER_ADDRESS,
       L2DepositTracker.abi,
       l2Wallet.provider
     )
-    console.log(
-      'connecting to existing l2DepositTracker at',
-      L2_DEPOSIT_TRACKER_ADDRESS
+    logger.info(
+      `connecting to existing l2DepositTracker at ${L2_DEPOSIT_TRACKER_ADDRESS}`
     )
   }
   if (!L1_DEPOSIT_INITIATOR_ADDRESS) {
     l1DepositInitiator = await deployContract(l1Wallet, L1DepositInitiator)
-    console.log('l1DepositInitiator address on L1:', l1DepositInitiator.address)
+    logger.info(
+      `l1DepositInitiator address on L1: ${l1DepositInitiator.address}`
+    )
   } else {
     l1DepositInitiator = new Contract(
       L1_DEPOSIT_INITIATOR_ADDRESS,
       L1DepositInitiator.abi,
       l1Wallet.provider
     )
-    console.log(
-      'connecting to existing l1DepositInitiator at',
-      L1_DEPOSIT_INITIATOR_ADDRESS
+    logger.info(
+      `connecting to existing l1DepositInitiator at ${L1_DEPOSIT_INITIATOR_ADDRESS}`
     )
   }
   if (!L2_TX_STORAGE_ADDRESS) {
     l2TxStorage = await deployContract(l2Wallet, L2TxStorage)
-    console.log('l2TxStorage address on L2:', l2TxStorage.address)
+    logger.info(`l2TxStorage address on L2: ${l2TxStorage.address}`)
   } else {
     l2TxStorage = new Contract(
       L2_TX_STORAGE_ADDRESS,
       L2TxStorage.abi,
       l2Wallet.provider
     )
-    console.log('connecting to existing l2TxStorage at', L2_TX_STORAGE_ADDRESS)
+    logger.info(
+      `connecting to existing l2TxStorage at ${L2_TX_STORAGE_ADDRESS}`
+    )
   }
   expect(
     (await l2Wallet.provider.getCode(l2TxStorage.address)).length > 2,
@@ -74,9 +78,10 @@ export const spamL1Deposits = async (
   ctcAddress,
   l2DepositTrackerAddress,
   numTxsToSend,
-  wallet
+  wallet,
+  logger: Logger
 ) => {
-  console.log('sending', numTxsToSend, 'l1->l2 messages')
+  logger.info(`sending ${numTxsToSend} l1->l2 messages`)
   const numDeposits = (await l1DepositInitiator.numDeposits()).toNumber()
   for (let i = numDeposits; i < numDeposits + numTxsToSend; i++) {
     while (true) {
@@ -84,7 +89,7 @@ export const spamL1Deposits = async (
         const tx = await l1DepositInitiator
           .connect(wallet)
           .initiateDeposit(i, ctcAddress, l2DepositTrackerAddress)
-        // console.log('sent deposit', i, tx.hash)
+        logger.info(`sent deposit ${i} - ${tx.hash}`)
         await tx.wait()
         break
       } catch (error) {
@@ -96,9 +101,14 @@ export const spamL1Deposits = async (
   }
 }
 
-export const spamL2Txs = async (l2TxStorage, numTxsToSend, wallet) => {
+export const spamL2Txs = async (
+  l2TxStorage,
+  numTxsToSend,
+  wallet,
+  logger: Logger
+) => {
   const numTxs = (await l2TxStorage.numTxs()).toNumber()
-  console.log('sending', numTxsToSend, 'l2 transactions')
+  logger.info(`sending ${numTxsToSend} l2 transactions`)
   for (let i = numTxs; i < numTxs + numTxsToSend; i++) {
     while (true) {
       try {
@@ -106,19 +116,19 @@ export const spamL2Txs = async (l2TxStorage, numTxsToSend, wallet) => {
           .connect(wallet)
           .sendTx(i, Math.round(Date.now() / 1000))
         await tx.wait()
-        // console.log('sent tx', i, tx.hash)
+        logger.info(`sent tx ${i} - ${tx.hash}`)
         break
       } catch (error) {
-        console.error('error sending tx', i, 'retrying in 1 second')
+        logger.error(`error sending tx ${i} retrying in 1 second`)
         await sleep(1000)
       }
     }
   }
 }
 
-export const verifyL2Txs = async (l2TxStorage) => {
+export const verifyL2Txs = async (l2TxStorage, logger: Logger) => {
   const numTxs = (await l2TxStorage.numTxs()).toNumber()
-  console.log('found', numTxs, 'txs')
+  logger.info(`found ${numTxs} txs`)
   for (let i = 0; i < numTxs; i++) {
     const getTx = await l2TxStorage.l2Txs(i)
     expect(getTx.txIndex.toNumber()).to.equal(
@@ -127,13 +137,13 @@ export const verifyL2Txs = async (l2TxStorage) => {
     )
     const receivedTime = getTx.timestampReceived.toNumber()
     const sentTime = getTx.realWorldTimeSent.toNumber()
-    // if (sentTime > receivedTime) {
-    //   console.log(
-    //     `received tx ${i}: ${sentTime - receivedTime} seconds in the past`
-    //   )
-    // } else {
-    //   console.log(`received tx ${i} after `, receivedTime - sentTime, 'seconds')
-    // }
+    if (sentTime > receivedTime) {
+      logger.info(
+        `received tx ${i}: ${sentTime - receivedTime} seconds in the past`
+      )
+    } else {
+      logger.info(`received tx ${i} after ${receivedTime - sentTime} seconds`)
+    }
   }
 }
 
@@ -141,14 +151,15 @@ export const verifyL2Deposits = async (
   l1DepositInitiator,
   l2DepositTracker,
   walletAddress,
-  actualIndexes
+  actualIndexes,
+  logger: Logger
 ) => {
   const numInitiatedDeposits = (
     await l1DepositInitiator.numDeposits()
   ).toNumber()
   const numDeposits = (await l2DepositTracker.numDeposits()).toNumber()
 
-  console.log('found', numDeposits, 'completed deposits')
+  logger.info('found', numDeposits, 'completed deposits')
   for (let i = 0; i < numDeposits; i++) {
     const deposit = await l2DepositTracker.l2Deposits(i)
     expect(deposit.depositerAddress).to.equal(
@@ -157,9 +168,9 @@ export const verifyL2Deposits = async (
     )
     const receivedTime = deposit.receivedTimestamp.toNumber()
     const sentTime = deposit.initiatedTimestamp.toNumber()
-    // console.log(
-    //   `deposit ${i} received after ${receivedTime - sentTime} seconds`
-    // )
+    logger.info(
+      `deposit ${i} received after ${receivedTime - sentTime} seconds`
+    )
     expect(deposit.depositIndex.toNumber()).to.equal(
       actualIndexes[i],
       'Received Deposit index does not match up to array index'
@@ -167,9 +178,13 @@ export const verifyL2Deposits = async (
   }
 }
 
-export const verifyL1Deposits = async (l1DepositInitiator, walletAddress) => {
+export const verifyL1Deposits = async (
+  l1DepositInitiator,
+  walletAddress,
+  logger: Logger
+) => {
   const numDeposits = (await l1DepositInitiator.numDeposits()).toNumber()
-  console.log('found', numDeposits, ' initiated deposits')
+  logger.info(`found ${numDeposits} initiated deposits`)
   const actualIndexes = []
   for (let i = 0; i < numDeposits; i++) {
     const deposit = await l1DepositInitiator.l1Deposits(i)
@@ -178,13 +193,16 @@ export const verifyL1Deposits = async (l1DepositInitiator, walletAddress) => {
       'Sent Depositer Address does not match up'
     )
     if (deposit.depositIndex.toNumber() !== i) {
-      console.error(
+      logger.error(
         `Sent Deposit index ${deposit.depositIndex.toNumber()} does not match up to array index ${i}`
       )
     }
     actualIndexes.push(deposit.depositIndex.toNumber())
-    expect(deposit.depositIndex.toNumber()).to.equal(i, 'Sent Deposit index does not match up to array index')
-    // console.log('deposit', i, 'initiated successfully')
+    expect(deposit.depositIndex.toNumber()).to.equal(
+      i,
+      'Sent Deposit index does not match up to array index'
+    )
+    logger.info(`deposit ${i} initiated successfully`)
   }
   return actualIndexes
 }

@@ -15,7 +15,7 @@
     "clean": "rimraf build/ && rimraf build-ovm/",
     "lint": "yarn lint:fix && yarn lint:check",
     "lint:check": "tslint --format stylish --project .",
-    "lint:fix": "prettier --config prettier-config.json --write '{helpers,test}/**/*.ts'",
+    "lint:fix": "prettier --config prettier-config.json --write '**/*.ts'",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
     "ci": "yarn test"
   },
@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@eth-optimism/contracts": "^0.1.11",
+    "@eth-optimism/core-utils": "^0.1.10",
     "@ethersproject/contracts": "^5.0.12",
     "@ethersproject/providers": "^5.0.24",
     "@ethersproject/wallet": "^5.0.12",

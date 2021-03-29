@@ -9,11 +9,9 @@ import { Config, sleep } from '../../../common'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
-import { add0x } from '@eth-optimism/core-utils'
+import { add0x, Logger } from '@eth-optimism/core-utils'
 import { getContractFactory } from '@eth-optimism/contracts'
 import { L1DataTransportClient } from '@eth-optimism/data-transport-layer'
-import { Logger } from '@eth-optimism/core-utils'
-import assert = require('assert')
 import {
   deployLoadTestContracts,
   spamL1Deposits,
@@ -35,6 +33,7 @@ describe('CTC upgrade', () => {
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
   const dtlClient = new L1DataTransportClient('http://localhost:7878')
+  const logger = new Logger({ name: 'ctc-upgrade' })
 
   let newCanonicalTransactionChain: Contract
   let ctcAddress: string
@@ -67,9 +66,8 @@ describe('CTC upgrade', () => {
     ctcAddress = await addressResolver.getAddress(
       'OVM_CanonicalTransactionChain'
     )
-    console.log(
-      'connected to existing CanonicalTransactionChain at',
-      ctcAddress
+    logger.info(
+      `connected to existing CanonicalTransactionChain at ${ctcAddress}`
     )
 
     const CanonicalTransactionChainFactory = getContractFactory(
@@ -87,11 +85,11 @@ describe('CTC upgrade', () => {
       l1DepositInitiator,
       l2TxStorage,
     } = await deployLoadTestContracts(l1Signer, l2Signer))
-    console.log('deployed all contracts, sleeping for 30 seconds')
+    logger.info('deployed all contracts, sleeping for 30 seconds')
     await sleep(1000 * 30)
     const latestDTLTx = await dtlClient.getLatestTransacton()
     startingDTLTxIndex = latestDTLTx.transaction.index
-    console.log('starting dtl tx index:', startingDTLTxIndex)
+    logger.info(`starting dtl tx index: ${startingDTLTxIndex}`)
     startingNumElements = (
       await newCanonicalTransactionChain.getTotalElements()
     ).toNumber()
@@ -140,7 +138,7 @@ describe('CTC upgrade', () => {
       const newCTCAddress = await addressResolver.getAddress(
         'OVM_CanonicalTransactionChain'
       )
-      console.log('deployed new CanonicalTransactionChain to', newCTCAddress)
+      logger.info(`deployed new CanonicalTransactionChain to ${newCTCAddress}`)
       expect(newCTCAddress).to.equal(newCanonicalTransactionChain.address)
     })
 
@@ -156,7 +154,7 @@ describe('CTC upgrade', () => {
         spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer),
       ]
       await Promise.all(tasks)
-      console.log('done sending txs, sleeping for 30 seconds...')
+      logger.info('done sending txs, sleeping for 30 seconds...')
       await sleep(1000 * 30)
     }).timeout(0)
 
