@@ -155,4 +155,20 @@ describe('Basic RPC tests', () => {
       expect(price.toNumber()).to.equal(expected)
     })
   })
+
+  describe('eth_estimateGas', () => {
+    it('should return a gas estimate', async () => {
+      // Repeat this test for a series of possible transaction sizes.
+      for (const size of [0, 2, 8, 64, 256]) {
+        const estimate = await provider.estimateGas({
+          ...DEFAULT_TRANSACTION,
+          data: '0x' + '00'.repeat(size),
+        })
+
+        // Good enough for now. Make sure we actually get an estimate back.
+        // Really we just want to ensure that `estimateGas` didn't throw.
+        expect(estimate.toNumber()).to.be.a('number')
+      }
+    })
+  })
 })
