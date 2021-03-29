@@ -63,7 +63,7 @@
     ethers "5.0.0"
     ganache-core "^2.12.1"
 
-"@eth-optimism/contracts@^0.1.4", "@eth-optimism/contracts@^0.1.9":
+"@eth-optimism/contracts@^0.1.11", "@eth-optimism/contracts@^0.1.4", "@eth-optimism/contracts@^0.1.9":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@eth-optimism/contracts/-/contracts-0.1.11.tgz#d33354b69e1bdaf11eac799a1f4dfb17295a04e7"
   integrity sha512-Ak4VoPwn9ZTH7Th5Ioh9HxGt9mtriOuiH1YuOtRihnhmmsJ0DO5k5dqdzbckUKYDW1s3sA7N6Yw3pbtZ9qiVWw==
@@ -112,7 +112,7 @@
     express "^4.17.1"
     uuid "^3.3.3"
 
-"@eth-optimism/core-utils@^0.1.5", "@eth-optimism/core-utils@^0.1.8":
+"@eth-optimism/core-utils@^0.1.10", "@eth-optimism/core-utils@^0.1.5", "@eth-optimism/core-utils@^0.1.8":
   version "0.1.10"
   resolved "https://registry.yarnpkg.com/@eth-optimism/core-utils/-/core-utils-0.1.10.tgz#bbed838cb7c9354e8b90029c47b7556ceaa756bf"
   integrity sha512-RyZ79yP1gJP8Clx6AqvoDiJzbOVQccsyj0OobwiNfO4gUU1Lpmz37zXsQITSO+3bKWj+ipxg2baZnJwfoTxl5g==
@@ -425,7 +425,7 @@
   dependencies:
     "@ethersproject/bignumber" "^5.0.13"
 
-"@ethersproject/contracts@5.0.12", "@ethersproject/contracts@^5.0.0", "@ethersproject/contracts@^5.0.4", "@ethersproject/contracts@^5.0.5":
+"@ethersproject/contracts@5.0.12", "@ethersproject/contracts@^5.0.0", "@ethersproject/contracts@^5.0.12", "@ethersproject/contracts@^5.0.4", "@ethersproject/contracts@^5.0.5":
   version "5.0.12"
   resolved "https://registry.yarnpkg.com/@ethersproject/contracts/-/contracts-5.0.12.tgz#6d488db46221258399dfe80b89bf849b3afd7897"
   integrity sha512-srijy31idjz8bE+gL1I6IRj2H4I9dUwfQ+QroLrIgNdGArqY8y2iFUKa3QTy+JBX26fJsdYiCQi1kKkaNpnMpQ==
@@ -642,7 +642,7 @@
     "@ethersproject/constants" "^5.0.8"
     "@ethersproject/logger" "^5.0.8"
 
-"@ethersproject/wallet@5.0.12", "@ethersproject/wallet@^5.0.0", "@ethersproject/wallet@^5.0.4":
+"@ethersproject/wallet@5.0.12", "@ethersproject/wallet@^5.0.0", "@ethersproject/wallet@^5.0.12", "@ethersproject/wallet@^5.0.4":
   version "5.0.12"
   resolved "https://registry.yarnpkg.com/@ethersproject/wallet/-/wallet-5.0.12.tgz#bfb96f95e066b4b1b4591c4615207b87afedda8b"
   integrity sha512-rboJebGf47/KPZrKZQdYg9BAYuXbc/OwcUyML1K1f2jnJeo1ObWV11U1PAWTjTbhhSy6/Fg+34GO2yMb5Dt1Rw==
@@ -5034,6 +5034,7 @@ ethereumjs-blockchain@^4.0.3:
     semaphore "^1.1.0"
 
 ethereumjs-common@1.5.0, "ethjs-common-v1@npm:ethereumjs-common@1.5.0":
+  name ethjs-common-v1
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/ethereumjs-common/-/ethereumjs-common-1.5.0.tgz#d3e82fc7c47c0cef95047f431a99485abc9bb1cd"
   integrity sha512-SZOjgK1356hIY7MRj3/ma5qtfr/4B5BL+G4rP/XSMYr2z1H5el4RX5GReYCKmQmYI/nSBmRnwrZ17IfHuG0viQ==
