@@ -4,220 +4,174 @@
  * https://github.com/ethereum-optimism
  */
 
+import { expect } from './setup'
+
+/* Imports: External */
+import { ethers } from 'ethers'
+
+/* Imports: Internal */
 import { Config, sleep } from '../../../common'
-import { Web3Provider } from '@ethersproject/providers'
-import { ganache } from '@eth-optimism/plugins/ganache'
-import { OptimismProvider, sighashEthSign } from '@eth-optimism/provider'
-import { verifyMessage } from '@ethersproject/wallet'
-import { computeAddress, parse } from '@ethersproject/transactions'
-import { SignatureLike, joinSignature } from '@ethersproject/bytes'
-import assert = require('assert')
 
-const DUMMY_ADDRESS = '0x' + '1234'.repeat(10)
+// TODO: Move this into its own file.
+const DEFAULT_TRANSACTION = {
+  to: '0x' + '1234'.repeat(10),
+  gasLimit: 4000000,
+  gasPrice: 0,
+  data: '0x',
+  value: 0,
+}
 
-describe('Transactions', () => {
-  let provider
-
+describe('Basic RPC tests', () => {
+  let provider: ethers.providers.JsonRpcProvider
   before(async () => {
-    const web3 = new Web3Provider(
-      ganache.provider({
-        mnemonic: Config.Mnemonic(),
-      })
-    )
-    provider = new OptimismProvider(Config.L2NodeUrlWithPort(), web3)
+    provider = new ethers.providers.JsonRpcProvider(Config.L2NodeUrlWithPort())
   })
 
-  it('should send eth_sendRawEthSignTransaction', async () => {
-    const signer = provider.getSigner()
-    const chainId = await signer.getChainId()
-
-    const address = await signer.getAddress()
-    const nonce = await provider.getTransactionCount(address)
-
-    const tx = {
-      to: DUMMY_ADDRESS,
-      nonce,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      data: '0x',
-      value: 0,
-      chainId,
-    }
-
-    const hex = await signer.signTransaction(tx)
-
-    const txid = await provider.send('eth_sendRawEthSignTransaction', [hex])
-    await provider.waitForTransaction(txid)
-
-    const sent = await provider.getTransaction(txid)
-    assert(sent !== null)
-    // The correct signature hashing was performed
-    address.should.eq(sent.from)
-
-    // The correct transaction is being returned
-    tx.to.should.eq(sent.to)
-    tx.value.should.eq(sent.value.toNumber())
-    tx.nonce.should.eq(sent.nonce)
-    tx.gasLimit.should.eq(sent.gasLimit.toNumber())
-    tx.gasPrice.should.eq(sent.gasPrice.toNumber())
-    tx.data.should.eq(sent.data)
-
-    // Fetching the transaction receipt works correctly
-    const receipt = await provider.getTransactionReceipt(txid)
-    address.should.eq(receipt.from)
-    tx.to.should.eq(receipt.to)
+  let wallet: ethers.Wallet
+  beforeEach(async () => {
+    // Generate a new random wallet before each test. Otherwise we'll run into stateful issues with
+    // nonces and whatnot.
+    wallet = ethers.Wallet.createRandom().connect(provider)
   })
 
-  it('should sendTransaction', async () => {
-    const signer = provider.getSigner()
-    const chainId = await signer.getChainId()
+  describe('eth_sendRawTransaction', () => {
+    it('should correctly process a valid transaction', async () => {
+      const tx = {
+        ...DEFAULT_TRANSACTION,
+        nonce: 0,
+      }
 
-    const address = await signer.getAddress()
-    const nonce = await provider.getTransactionCount(address)
+      const result = await wallet.sendTransaction(tx)
+      await result.wait()
 
-    const tx = {
-      to: DUMMY_ADDRESS,
-      nonce,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      data: '0x',
-      value: 0,
-      chainId,
-    }
+      expect(result.from).to.equal(wallet.address)
+      expect(result.nonce).to.equal(tx.nonce)
+      expect(result.gasLimit.toNumber()).to.equal(tx.gasLimit)
+      expect(result.gasPrice.toNumber()).to.equal(tx.gasPrice)
+      expect(result.data).to.equal(tx.data)
+    })
 
-    const result = await signer.sendTransaction(tx)
-    await result.wait()
+    it('should not accept a transaction with the wrong chain ID', async () => {
+      const tx = {
+        ...DEFAULT_TRANSACTION,
+        chainId: (await wallet.getChainId()) + 1,
+      }
 
-    // "from" is calculated client side here, so
-    // make sure that it is computed correctly.
-    result.from.should.eq(address)
+      await expect(
+        provider.sendTransaction(await wallet.signTransaction(tx))
+      ).to.eventually.be.rejectedWith('invalid transaction: invalid sender')
+    })
 
-    tx.nonce.should.eq(result.nonce)
-    tx.gasLimit.should.eq(result.gasLimit.toNumber())
-    tx.gasPrice.should.eq(result.gasPrice.toNumber())
-    tx.data.should.eq(result.data)
+    it('should not accept a transaction without a chain ID', async () => {
+      const tx = {
+        ...DEFAULT_TRANSACTION,
+        chainId: null, // Disables EIP155 transaction signing.
+      }
+
+      await expect(
+        provider.sendTransaction(await wallet.signTransaction(tx))
+      ).to.eventually.be.rejectedWith('Cannot submit unprotected transaction')
+    })
   })
 
-  it('gas price should be 0', async () => {
-    const price = await provider.getGasPrice()
-    const num = price.toNumber()
-    num.should.eq(0)
+  describe('eth_getTransactionByHash', () => {
+    it('should be able to get all relevant l1/l2 transaction data', async () => {
+      const tx = DEFAULT_TRANSACTION
+      const result = await wallet.sendTransaction(tx)
+      await result.wait()
+
+      const transaction = await provider.send('eth_getTransactionByHash', [
+        result.hash,
+      ])
+
+      expect(transaction.txType).to.equal('EIP155')
+      expect(transaction.queueOrigin).to.equal('sequencer')
+      expect(
+        ethers.BigNumber.from(transaction.transactionIndex).toNumber()
+      ).to.equal(0) // Only one transaction per block!
+      expect(ethers.BigNumber.from(transaction.gas).toNumber()).to.equal(
+        tx.gasLimit
+      )
+    })
   })
 
-  it('should estimate gas', async () => {
-    const template = {
-      to: DUMMY_ADDRESS,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      value: 0,
-      data: '',
-    }
+  describe('eth_getBlockByHash', () => {
+    it('should return the block and all included transactions', async () => {
+      // Send a transaction and wait for it to be mined.
+      const tx = DEFAULT_TRANSACTION
+      const result = await wallet.sendTransaction(tx)
+      const receipt = await result.wait()
 
-    // The gas price is the same with different
-    // transaction sizes.
-    const cases = ['0x', '0x' + '00'.repeat(256)]
+      const block = await provider.send('eth_getBlockByHash', [
+        receipt.blockHash,
+        true,
+      ])
 
-    const estimates = []
-    for (const c of cases) {
-      template.data = c
-      const estimate = await provider.estimateGas(template)
-      estimates.push(estimate)
-    }
-
-    // Pull in the env var that configures the target
-    // gas limit in l2 geth
-    const targetGasLimit = Config.TargetGasLimit()
-
-    for (const estimate of estimates) {
-      estimate.toNumber().should.eq(targetGasLimit - 1)
-    }
+      expect(block.number).to.not.equal(0)
+      expect(typeof block.stateRoot).to.equal('string')
+      expect(block.transactions.length).to.equal(1)
+      expect(block.transactions[0].txType).to.equal('EIP155')
+      expect(block.transactions[0].queueOrigin).to.equal('sequencer')
+      expect(block.transactions[0].l1TxOrigin).to.equal(null)
+    })
   })
 
-  it('should get correct chainid', async () => {
-    const chainId = await provider.send('eth_chainId', [])
-    const expected = Config.ChainID()
-    chainId.should.eq('0x' + expected.toString(16))
-    parseInt(chainId, 16).should.eq(expected)
+  describe('eth_getBlockByNumber', () => {
+    // There was a bug that causes transactions to be reingested over
+    // and over again only when a single transaction was in the
+    // canonical transaction chain. This test catches this by
+    // querying for the latest block and then waits and then queries
+    // the latest block again and then asserts that they are the same.
+    it('should return the same result when new transactions are not applied', async () => {
+      // Get latest block once to start.
+      const prev = await provider.send('eth_getBlockByNumber', ['latest', true])
+
+      // Over ten seconds, repeatedly check the latest block to make sure nothing has changed.
+      for (let i = 0; i < 5; i++) {
+        const latest = await provider.send('eth_getBlockByNumber', [
+          'latest',
+          true,
+        ])
+        await sleep(2000)
+        expect(latest).to.deep.equal(prev)
+      }
+    })
   })
 
-  // Get a reference to the transaction sent in
-  // this test to use in the next test
-  let transaction
-  it('should get transaction (l2 metadata)', async () => {
-    const tx = {
-      to: DUMMY_ADDRESS,
-      gasLimit: 4000000,
-      gasPrice: 0,
-      data: '0x',
-      value: 0,
-    }
+  describe('eth_chainId', () => {
+    it('should get the correct chainid', async () => {
+      const expected = Config.ChainID()
+      const result = await provider.send('eth_chainId', [])
 
-    const signer = provider.getSigner()
-    const result = await signer.sendTransaction(tx)
-    await result.wait()
-    transaction = await provider.getTransaction(result.hash)
-
-    transaction.txType.should.be.a('string')
-    transaction.txType.should.eq('EthSign')
-    transaction.queueOrigin.should.be.a('string')
-    transaction.queueOrigin.should.eq('sequencer')
-    // Only 1 transaction per block
-    transaction.transactionIndex.should.eq(0)
-    transaction.gasLimit.toNumber().should.eq(tx.gasLimit)
-    transaction.chainId.should.eq(Config.ChainID())
+      expect(parseInt(result, 16)).to.equal(expected)
+    })
   })
 
-  // This test depends on previous transactions being mined
-  it('should get block with transactions', async () => {
-    const block = await provider.getBlockWithTransactions(transaction.blockHash)
-    assert(block.number !== 0)
-    // ethers JsonRpcProvider does not return the state root
-    // but the OptimismProvider does.
-    assert(typeof block.stateRoot === 'string')
-    // There must be a single transaction
-    assert(block.transactions.length === 1)
-    const tx = block.transactions[0]
-    // The `OptimismProvider` creates EthSign transactions
-    assert(tx.txType === 'EthSign')
-    // The transaction was sent directly to the sequencer so the
-    // queue origin is sequencer
-    assert(tx.queueOrigin === 'sequencer')
-    // The queue origin is the sequencer, not L1, so there is
-    // no L1TxOrigin
-    assert(tx.l1TxOrigin === null)
+  describe('eth_gasPrice', () => {
+    it('gas price should be 0', async () => {
+      const expected = 0
+      const price = await provider.getGasPrice()
+
+      expect(price.toNumber()).to.equal(expected)
+    })
   })
 
-  // There was a bug that causes transactions to be reingested over
-  // and over again only when a single transaction was in the
-  // canonical transaction chain. This test catches this by
-  // querying for the latest block and then waits and then queries
-  // the latest block again and then asserts that they are the same.
-  it('should not reingest transactions', async () => {
-    const one = await provider.getBlockWithTransactions('latest')
-    await sleep(2000)
-    const two = await provider.getBlockWithTransactions('latest')
-    assert.deepEqual(one, two)
-  })
+  // TODO: Fix this test when we update how we compute gas estimates.
+  describe('eth_estimateGas', () => {
+    it('should return block gas limit minus one', async () => {
+      // We currently fix gas price to TargetGasLimit-1
+      const expected = Config.TargetGasLimit() - 1
 
-  it('should not accept transactions with incorrect chainid', async () => {
-    // set err initially to false so that it can be set to true
-    // in the `try/catch` below
-    let err = false
-    const chainId = await provider.send('eth_chainId', [])
-    const signer = provider.getSigner()
-    try {
-      await signer.sendTransaction({
-        to: DUMMY_ADDRESS,
-        gasLimit: 4000000,
-        gasPrice: 0,
-        data: '0x',
-        value: 0,
-        chainId: parseInt(chainId, 16) + 1,
-      })
-      assert(false)
-    } catch (e) {
-      err = true
-    }
-    assert(err)
+      // Repeat this test for a series of possible transaction sizes to demonstrate that we always
+      // get the same estimate.
+      for (const size of [0, 2, 8, 64, 256]) {
+        const estimate = await provider.estimateGas({
+          ...DEFAULT_TRANSACTION,
+          data: '0x' + '00'.repeat(size),
+        })
+
+        expect(estimate.toNumber()).to.equal(expected)
+      }
+    })
   })
 })

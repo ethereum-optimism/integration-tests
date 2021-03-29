@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'path'
 import chai = require('chai')
 import dotenv = require('dotenv')
 import chaiAsPromised = require('chai-as-promised')
@@ -7,16 +7,19 @@ import { JsonRpcProvider, Provider } from '@ethersproject/providers'
 chai.use(chaiAsPromised)
 const should = chai.should()
 
+export const expect = chai.expect
+
 // Load up env variables if running locally
 if (process.env.NODE_ENV === 'local') {
-  const envPath = path.join(__dirname, '/.env');
+  const envPath = path.join(__dirname, '/.env')
   dotenv.config({ path: envPath })
 }
 
 // Commonly used test mnemonic
-export const mnemonic = process.env.MNEMONIC ||
+export const mnemonic =
+  process.env.MNEMONIC ||
   'abandon abandon abandon abandon abandon abandon ' +
-  'abandon abandon abandon abandon abandon about'
+    'abandon abandon abandon abandon abandon about'
 
 let l1Provider: Provider
 export const getL1Provider = (): Provider => {
@@ -43,7 +46,7 @@ export class Config {
   }
 
   public static L2NodeUrlWithPort(): string {
-    if (process.env.L1_NODE_WEB3_URL === undefined) {
+    if (process.env.L2_NODE_WEB3_URL === undefined) {
       throw new Error('L2_NODE_WEB3_URL is undefined')
     }
     return process.env.L2_NODE_WEB3_URL

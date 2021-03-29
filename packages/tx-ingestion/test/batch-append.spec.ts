@@ -4,20 +4,14 @@
  * https://github.com/ethereum-optimism
  */
 
-import { Config, sleep, poll } from '../../../common'
+import { Config, sleep } from '../../../common'
 
-import {
-  Provider,
-  Web3Provider,
-  JsonRpcProvider,
-} from '@ethersproject/providers'
+import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
 import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
 import { add0x } from '@eth-optimism/core-utils'
 import { ganache } from '@eth-optimism/plugins/ganache'
 import { OptimismProvider } from '@eth-optimism/provider'
-import { getContractAddress } from '@ethersproject/address'
-import { computeAddress } from '@ethersproject/transactions'
 import { getContractFactory } from '@eth-optimism/contracts'
 import assert = require('assert')
 
