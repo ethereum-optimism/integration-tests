@@ -69,7 +69,10 @@ describe('CTC upgrade', () => {
     ctcAddress = await addressResolver.getAddress(
       'OVM_CanonicalTransactionChain'
     )
-    console.log('connected to existing CanonicalTransactionChain at', ctcAddress)
+    console.log(
+      'connected to existing CanonicalTransactionChain at',
+      ctcAddress
+    )
 
     const CanonicalTransactionChainFactory = getContractFactory(
       'OVM_CanonicalTransactionChain'
@@ -179,7 +182,8 @@ describe('CTC upgrade', () => {
     it('should have batch submitted all transactions', async () => {
       const numElements = await newCanonicalTransactionChain.getTotalElements()
       const numQueued = await newCanonicalTransactionChain.getQueueLength()
-      const expectedNumElements = startingNumElements + (NUM_DEPOSITS_TO_SEND + NUM_TXS_TO_SEND) * 2
+      const expectedNumElements =
+        startingNumElements + (NUM_DEPOSITS_TO_SEND + NUM_TXS_TO_SEND) * 2
       expect(numElements.toNumber()).to.equal(expectedNumElements)
       const expectedNumQueued = startingNumQueued + NUM_DEPOSITS_TO_SEND * 2
       expect(numQueued).to.equal(expectedNumQueued)
@@ -187,7 +191,8 @@ describe('CTC upgrade', () => {
 
     it('should have picked up all transactions in DTL', async () => {
       const latestDTLTx = await dtlClient.getLatestTransacton()
-      const expectedDTLIndex = startingDTLTxIndex + (NUM_DEPOSITS_TO_SEND + NUM_TXS_TO_SEND) * 2
+      const expectedDTLIndex =
+        startingDTLTxIndex + (NUM_DEPOSITS_TO_SEND + NUM_TXS_TO_SEND) * 2
       expect(latestDTLTx.transaction.index).to.equal(expectedDTLIndex)
     }).timeout(0)
 

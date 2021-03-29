@@ -13,8 +13,9 @@
     "build:ovm": "waffle ../../waffle-config.ovm.js",
     "build:ts": "mkdir -p build && tsc -p .",
     "clean": "rimraf build/ && rimraf build-ovm/",
-    "fix": "prettier --config ../../prettier-config.json --write '**/*.ts'",
-    "lint": "tslint --format stylish --project .",
+    "lint": "yarn lint:fix && yarn lint:check",
+    "lint:check": "tslint --format stylish --project .",
+    "lint:fix": "prettier --config prettier-config.json --write '{helpers,test}/**/*.ts'",
     "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
     "ci": "yarn test"
   },
@@ -33,14 +34,17 @@
     "url": "https://github.com/ethereum-optimism/optimistic-rollup-integration-tests.git"
   },
   "devDependencies": {
+    "@eth-optimism/contracts": "^0.1.11",
+    "@ethersproject/contracts": "^5.0.12",
+    "@ethersproject/providers": "^5.0.24",
+    "@ethersproject/wallet": "^5.0.12",
     "@types/node": "^12.0.7",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "rimraf": "^2.6.3",
-    "@ethersproject/providers": "^5.0.24",
     "ethereum-waffle": "^3.3.0",
     "ethers": "^5.0.32",
-    "mocha": "^8.3.1"
+    "mocha": "^8.3.1",
+    "rimraf": "^2.6.3"
   },
   "publishConfig": {
     "access": "public"
