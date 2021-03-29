@@ -5,13 +5,14 @@ import L2DepositTracker = require('../../contracts/build-ovm/L2DepositTracker.js
 import L1DepositInitiator = require('../../contracts/build/L1DepositInitiator.json')
 import L2TxStorage = require('../../contracts/build-ovm/L2TxStorage.json')
 import { Contract } from '@ethersproject/contracts'
+import { Wallet } from '@ethersproject/wallet'
 
 export const deployLoadTestContracts = async (
-  l1Wallet,
-  l2Wallet,
-  L2_DEPOSIT_TRACKER_ADDRESS?,
-  L1_DEPOSIT_INITIATOR_ADDRESS?,
-  L2_TX_STORAGE_ADDRESS?
+  l1Wallet: Wallet,
+  l2Wallet: Wallet,
+  L2_DEPOSIT_TRACKER_ADDRESS?: string,
+  L1_DEPOSIT_INITIATOR_ADDRESS?: string,
+  L2_TX_STORAGE_ADDRESS?: string,
 ) => {
   let l2DepositTracker
   let l1DepositInitiator
@@ -182,7 +183,7 @@ export const verifyL1Deposits = async (l1DepositInitiator, walletAddress) => {
       )
     }
     actualIndexes.push(deposit.depositIndex.toNumber())
-    // expect(deposit.depositIndex.toNumber()).to.equal(i, 'Sent Deposit index does not match up to array index')
+    expect(deposit.depositIndex.toNumber()).to.equal(i, 'Sent Deposit index does not match up to array index')
     // console.log('deposit', i, 'initiated successfully')
   }
   return actualIndexes

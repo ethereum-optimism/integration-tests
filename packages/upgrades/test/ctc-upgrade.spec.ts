@@ -12,6 +12,7 @@ import { Contract } from '@ethersproject/contracts'
 import { add0x } from '@eth-optimism/core-utils'
 import { getContractFactory } from '@eth-optimism/contracts'
 import { L1DataTransportClient } from '@eth-optimism/data-transport-layer'
+import { Logger } from '@eth-optimism/core-utils'
 import assert = require('assert')
 import {
   deployLoadTestContracts,
@@ -30,16 +31,13 @@ const expect = chai.expect
 describe('CTC upgrade', () => {
   let l1Provider: JsonRpcProvider
   let l1Signer: Wallet
-  let l2Signer
+  let l2Signer: Wallet
   let l2Provider: JsonRpcProvider
   let addressResolver: Contract
   const dtlClient = new L1DataTransportClient('http://localhost:7878')
 
-  let canonicalTransactionChain: Contract
   let newCanonicalTransactionChain: Contract
   let ctcAddress: string
-
-  const mnemonic = Config.Mnemonic()
 
   const FORCE_INCLUSION_PERIOD_SECONDS = 2592000 // 30 days
   const FORCE_INCLUSION_PERIOD_BLOCKS = Math.floor(2592000 / 13) //30 days of blocks
@@ -47,12 +45,12 @@ describe('CTC upgrade', () => {
   const NUM_TXS_TO_SEND = 15
   const NUM_DEPOSITS_TO_SEND = 10
 
-  let l2DepositTracker
-  let l1DepositInitiator
-  let l2TxStorage
-  let startingDTLTxIndex
-  let startingNumElements
-  let startingNumQueued
+  let l2DepositTracker: Contract
+  let l1DepositInitiator: Contract
+  let l2TxStorage: Contract
+  let startingDTLTxIndex: number
+  let startingNumElements: number
+  let startingNumQueued: number
 
   before(async () => {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
@@ -78,9 +76,6 @@ describe('CTC upgrade', () => {
       'OVM_CanonicalTransactionChain'
     ).connect(l1Signer)
 
-    canonicalTransactionChain = CanonicalTransactionChainFactory.attach(
-      ctcAddress
-    )
     newCanonicalTransactionChain = await CanonicalTransactionChainFactory.deploy(
       addressResolverAddress,
       FORCE_INCLUSION_PERIOD_SECONDS,

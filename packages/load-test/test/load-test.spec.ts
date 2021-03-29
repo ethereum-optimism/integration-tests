@@ -4,7 +4,7 @@
  * https://github.com/ethereum-optimism
  */
 
-import { Config, sleep, poll, getL1Provider } from '../../../common'
+import { Config, sleep } from '../../../common'
 import {
   deployLoadTestContracts,
   spamL1Deposits,
@@ -13,21 +13,13 @@ import {
   verifyL2Deposits,
   verifyL2Txs,
 } from '../helpers'
-import { expect } from 'chai'
-import assert = require('assert')
 import {
-  Provider,
-  Web3Provider,
   JsonRpcProvider,
 } from '@ethersproject/providers'
 import { Wallet } from '@ethersproject/wallet'
 import { Contract } from '@ethersproject/contracts'
 
 import { getContractInterface } from '@eth-optimism/contracts'
-import { deployContract } from 'ethereum-waffle'
-import L2DepositTracker = require('../../../contracts/build-ovm/L2DepositTracker.json')
-import L1DepositInitiator = require('../../../contracts/build/L1DepositInitiator.json')
-import L2TxStorage = require('../../../contracts/build-ovm/L2TxStorage.json')
 
 const L2_DEPOSIT_TRACKER_ADDRESS = Config.L2DepositTrackerAddress()
 const L1_DEPOSIT_INITIATOR_ADDRESS = Config.L1DepositIntiatorAddress()
@@ -48,10 +40,10 @@ const AddressManager = new Contract(
 describe('Deposit Load Test', async () => {
   const numDepositsToSend = 10
   const numTxsToSend = 15
-  let l2DepositTracker
-  let l1DepositInitiator
-  let ctcAddress
-  let l2TxStorage
+  let l2DepositTracker: Contract
+  let l1DepositInitiator: Contract
+  let ctcAddress: string
+  let l2TxStorage: Contract
 
   before(async () => {
     ;({
