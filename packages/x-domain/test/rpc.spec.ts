@@ -156,21 +156,18 @@ describe('Basic RPC tests', () => {
     })
   })
 
-  // TODO: Fix this test when we update how we compute gas estimates.
   describe('eth_estimateGas', () => {
-    it('should return block gas limit minus one', async () => {
-      // We currently fix gas price to TargetGasLimit-1
-      const expected = Config.TargetGasLimit() - 1
-
-      // Repeat this test for a series of possible transaction sizes to demonstrate that we always
-      // get the same estimate.
+    it('should return a gas estimate', async () => {
+      // Repeat this test for a series of possible transaction sizes.
       for (const size of [0, 2, 8, 64, 256]) {
         const estimate = await provider.estimateGas({
           ...DEFAULT_TRANSACTION,
           data: '0x' + '00'.repeat(size),
         })
 
-        expect(estimate.toNumber()).to.equal(expected)
+        // Good enough for now. Make sure we actually get an estimate back.
+        // Really we just want to ensure that `estimateGas` didn't throw.
+        expect(estimate.toNumber()).to.be.a('number')
       }
     })
   })
