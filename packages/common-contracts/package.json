@@ -1,0 +1,30 @@
+{
+  "name": "@eth-optimism/test-common-contracts",
+  "version": "0.0.1",
+  "description": "[Optimism] Integration Tests: Common Contracts",
+  "license": "MIT",
+  "author": "Optimism",
+  "scripts": {
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --show-stack-traces",
+    "lint": "yarn lint:fix && yarn lint:check",
+    "lint:check": "tslint --format stylish --project .",
+    "lint:fix": "prettier --config prettier-config.json --write '{helpers,test}/**/*.ts'",
+    "test": "hardhat test --network localhost --show-stack-traces",
+    "ci": "yarn test"
+  },
+  "devDependencies": {
+    "@eth-optimism/contracts": "^0.1.9",
+    "@eth-optimism/plugins": "^0.0.20",
+    "@eth-optimism/watcher": "^0.0.1-alpha.6 ",
+    "@ethersproject/providers": "^5.0.9",
+    "@ethersproject/transactions": "^5.0.5",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "ethereum-waffle": "^3.2.0",
+    "ethers": "^5.0.23",
+    "hardhat": "^2.1.1",
+    "mocha": "^8.3.2"
+  }
+}
