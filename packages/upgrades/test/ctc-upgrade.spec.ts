@@ -84,7 +84,7 @@ describe('CTC upgrade', () => {
       l2DepositTracker,
       l1DepositInitiator,
       l2TxStorage,
-    } = await deployLoadTestContracts(l1Signer, l2Signer))
+    } = await deployLoadTestContracts(l1Signer, l2Signer, logger))
     logger.info('deployed all contracts, sleeping for 30 seconds')
     await sleep(1000 * 30)
     const latestDTLTx = await dtlClient.getLatestTransacton()
@@ -108,9 +108,10 @@ describe('CTC upgrade', () => {
         ctcAddress,
         l2DepositTracker.address,
         NUM_DEPOSITS_TO_SEND,
-        l1Signer
+        l1Signer,
+        logger
       ),
-      spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer),
+      spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer, logger),
     ]
     await Promise.all(tasks)
   }).timeout(0)
@@ -149,9 +150,10 @@ describe('CTC upgrade', () => {
           newCanonicalTransactionChain.address,
           l2DepositTracker.address,
           NUM_DEPOSITS_TO_SEND,
-          l1Signer
+          l1Signer,
+          logger
         ),
-        spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer),
+        spamL2Txs(l2TxStorage, NUM_TXS_TO_SEND, l2Signer, logger),
       ]
       await Promise.all(tasks)
       logger.info('done sending txs, sleeping for 30 seconds...')
@@ -161,15 +163,17 @@ describe('CTC upgrade', () => {
     it('should verify deposits and L2 transactions', async () => {
       const actualIndexes = await verifyL1Deposits(
         l1DepositInitiator,
-        l1Signer.address
+        l1Signer.address,
+        logger
       )
       await verifyL2Deposits(
         l1DepositInitiator,
         l2DepositTracker,
         l1Signer.address,
-        actualIndexes
+        actualIndexes,
+        logger
       )
-      await verifyL2Txs(l2TxStorage)
+      await verifyL2Txs(l2TxStorage, logger)
     }).timeout(0)
 
     it('should have batch submitted all transactions', async () => {
