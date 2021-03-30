@@ -1,5 +1,6 @@
 import { sleep } from '../../common'
 import { expect } from 'chai'
+/* External Imports */
 import { deployContract } from 'ethereum-waffle'
 import L2DepositTracker = require('../../contracts/build-ovm/L2DepositTracker.json')
 import L1DepositInitiator = require('../../contracts/build/L1DepositInitiator.json')

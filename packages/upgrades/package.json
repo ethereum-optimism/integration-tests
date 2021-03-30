@@ -8,9 +8,7 @@
   ],
   "scripts": {
     "all": "yarn clean && yarn build && && yarn test && yarn fix && yarn lint",
-    "build": "yarn build:evm && yarn build:ovm && yarn build:ts",
-    "build:evm": "waffle ../../waffle-config.evm.js",
-    "build:ovm": "waffle ../../waffle-config.ovm.js",
+    "build": "yarn build:ts",
     "build:ts": "mkdir -p build && tsc -p .",
     "clean": "rimraf build/ && rimraf build-ovm/",
     "fix": "prettier --config ../../prettier-config.json --write 'index.ts' '{src,test}/**/*.ts'",
@@ -42,9 +40,8 @@
     "@ethersproject/providers": "^5.0.24",
     "@ethersproject/wallet": "^5.0.12",
     "@types/node": "^12.0.7",
-    "chai": "^4.2.0",
+    "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
-    "ethereum-waffle": "^3.3.0",
     "ethers": "^5.0.32",
     "mocha": "^8.3.1",
     "rimraf": "^2.6.3"

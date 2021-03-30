@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity >=0.7.0 <0.8.0;
 
 contract L2DepositTracker {
     struct L2DepositMetadata {
@@ -23,7 +23,7 @@ contract L2DepositTracker {
                 depositerAddress: _depositerAddress,
                 initiatedTimestamp: _initiatedTimestamp,
                 initiatedBlockNumber: _initiatedBlockNumber,
-                receivedTimestamp: now,
+                receivedTimestamp: block.timestamp,
                 receivedBlockNumber: block.number
             })
         );

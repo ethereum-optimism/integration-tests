@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity >=0.7.0 <0.8.0;
 
 contract L2TxStorage {
     struct L2TxMetadata {
@@ -14,7 +14,7 @@ contract L2TxStorage {
                 txIndex: _txIndex,
                 realWorldTimeSent: _realWorldTimeSent,
                 msgSender: msg.sender,
-                timestampReceived: now
+                timestampReceived: block.timestamp
             })
         );
     }
