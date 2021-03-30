@@ -17,6 +17,8 @@
     "test:x-domain": "NODE_ENV=local wsrun -p @eth-optimism*/x-domain --fast-exit --no-prefix --exclude-missing --timeout 20000 test",
     "test:tx-ingestion": "NODE_ENV=local wsrun -p @eth-optimism*/tx-ingestion --fast-exit --no-prefix --exclude-missing --timeout 20000 test",
     "test:sequencer-interactions": "NODE_ENV=local wsrun -p @eth-optimism*/sequencer-interactions --fast-exit --no-prefix --exclude-missing --timeout 20000 test",
+    "test:upgrades": "NODE_ENV=local wsrun -p @eth-optimism*/upgrades --fast-exit --no-prefix --exclude-missing --timeout 20000 test",
+    "test:load-test": "NODE_ENV=local wsrun -p @eth-optimism*/load-test --fast-exit --no-prefix --exclude-missing --timeout 20000 test",
     "build": "yarn build:common && yarn build:packages",
     "build:common": "waffle ./waffle-config.evm.js && waffle ./waffle-config.ovm.js",
     "build:packages": "wsrun -p $(yarn --silent run pkgparse) -r --fast-exit --stages --exclude-missing build",
