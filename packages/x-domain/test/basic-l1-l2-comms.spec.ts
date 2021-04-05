@@ -12,8 +12,8 @@ import l1SimpleStorageJson = require('../../../contracts/build/SimpleStorage.jso
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 
 describe('Basic L1<>L2 Communication', async () => {
-  const l1Provider = getl2Provider()
-  const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+  const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
+  const l2Provider = getl2Provider()
 
   let l1Wallet: Wallet
   let l2Wallet: Wallet
