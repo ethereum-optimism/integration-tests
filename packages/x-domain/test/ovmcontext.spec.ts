@@ -1,4 +1,4 @@
-import { Config, sleep, expect } from '../../../common'
+import { Config, sleep, expect, getl2Provider } from '../../../common'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { getContractFactory } from '@eth-optimism/contracts'
 
@@ -18,7 +18,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
   let OVMContextStorage: Contract
 
   const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-  const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+  const l2Provider = getl2Provider()
 
   before(async () => {
     // Create providers and signers

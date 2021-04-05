@@ -10,7 +10,7 @@ import { expect } from './setup'
 import { ethers } from 'ethers'
 
 /* Imports: Internal */
-import { Config, sleep } from '../../../common'
+import { Config, getl2Provider, sleep } from '../../../common'
 
 // TODO: Move this into its own file.
 const DEFAULT_TRANSACTION = {
@@ -24,7 +24,7 @@ const DEFAULT_TRANSACTION = {
 describe('Basic RPC tests', () => {
   let provider: ethers.providers.JsonRpcProvider
   before(async () => {
-    provider = new ethers.providers.JsonRpcProvider(Config.L2NodeUrlWithPort())
+    provider = getl2Provider()
   })
 
   let wallet: ethers.Wallet

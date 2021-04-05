@@ -5,7 +5,7 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ContractFactory, Wallet } from 'ethers'
 
 /* Imports: Internal */
-import { Config } from '../../../common'
+import { Config, getl2Provider } from '../../../common'
 import ERC20ABI = require('../../../contracts/build-ovm/ChainlinkERC20.json')
 import UpgradeableProxyABI = require('../../../contracts/build-ovm/UpgradeableProxy.json')
 
@@ -13,7 +13,7 @@ describe('Reading events from proxy contracts', () => {
   let l2Provider: JsonRpcProvider
   let l2Wallet: Wallet
   before(async () => {
-    l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+    l2Provider = getl2Provider()
     l2Wallet = new Wallet(Config.DeployerPrivateKey()).connect(l2Provider)
   })
 

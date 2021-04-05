@@ -31,6 +31,7 @@
     "chai-as-promised": "^7.1.1",
     "dotenv": "^8.2.0",
     "ethereum-waffle": "^3.3.0",
+    "ethers": "^5.1.0",
     "lerna": "^3.13.1",
     "solc": "^0.7.6",
     "wsrun": "^3.6.4"
