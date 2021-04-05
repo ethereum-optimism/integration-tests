@@ -35,7 +35,7 @@ export const getl2Provider = (): JsonRpcProvider => {
   if (!l2Provider) {
     l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
     l2Provider.getGasPrice = async () => {
-      return BigNumber.from(1)
+      return BigNumber.from(0)
     }
   }
   return l2Provider
