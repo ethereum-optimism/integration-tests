@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import assert = require('assert')
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, Contract, Wallet } from 'ethers'
+import { BigNumber, Contract, Wallet, constants } from 'ethers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { Watcher } from '@eth-optimism/watcher'
 
@@ -77,11 +77,16 @@ describe('Native ETH Integration Tests', async () => {
     l1bob = new Wallet(BOB_PRIV_KEY, l1Provider)
     l2bob = new Wallet(BOB_PRIV_KEY, l2Provider)
 
-    OVM_L1ETHGateway = new Contract(
-      await AddressManager.getAddress('OVM_L1ETHGateway'),
-      l1GatewayInterface,
-      l1Wallet
+    const ProxyGatewayAddress = await AddressManager.getAddress(
+      'Proxy__OVM_L1ETHGateway'
     )
+    const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
+    const addressToUse =
+      ProxyGatewayAddress !== constants.AddressZero
+        ? ProxyGatewayAddress
+        : GatewayAddress
+
+    OVM_L1ETHGateway = new Contract(addressToUse, l1GatewayInterface, l1Wallet)
 
     OVM_ETH = new Contract(
       OVM_ETH_ADDRESS,
