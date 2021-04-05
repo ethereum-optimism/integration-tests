@@ -77,16 +77,16 @@ describe('Native ETH Integration Tests', async () => {
     l1bob = new Wallet(BOB_PRIV_KEY, l1Provider)
     l2bob = new Wallet(BOB_PRIV_KEY, l2Provider)
 
-    const ProxyGatewayAddress = await AddressManager.getAddress('Proxy__OVM_L1ETHGateway')
-    const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
-    const addressToUse = ProxyGatewayAddress != constants.AddressZero
-      ? ProxyGatewayAddress : GatewayAddress
-
-    OVM_L1ETHGateway = new Contract(
-      addressToUse,
-      l1GatewayInterface,
-      l1Wallet
+    const ProxyGatewayAddress = await AddressManager.getAddress(
+      'Proxy__OVM_L1ETHGateway'
     )
+    const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
+    const addressToUse =
+      ProxyGatewayAddress !== constants.AddressZero
+        ? ProxyGatewayAddress
+        : GatewayAddress
+
+    OVM_L1ETHGateway = new Contract(addressToUse, l1GatewayInterface, l1Wallet)
 
     OVM_ETH = new Contract(
       OVM_ETH_ADDRESS,

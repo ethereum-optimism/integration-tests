@@ -61,16 +61,16 @@ describe('Fee Payment Integration Tests', async () => {
     AddressManager = system.AddressManager
     watcher = system.watcher
 
-    const ProxyGatewayAddress = await AddressManager.getAddress('Proxy__OVM_L1ETHGateway')
-    const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
-    const addressToUse = ProxyGatewayAddress != constants.AddressZero
-      ? ProxyGatewayAddress : GatewayAddress
-
-    OVM_L1ETHGateway = new Contract(
-      addressToUse,
-      l1GatewayInterface,
-      l1Wallet
+    const ProxyGatewayAddress = await AddressManager.getAddress(
+      'Proxy__OVM_L1ETHGateway'
     )
+    const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
+    const addressToUse =
+      ProxyGatewayAddress !== constants.AddressZero
+        ? ProxyGatewayAddress
+        : GatewayAddress
+
+    OVM_L1ETHGateway = new Contract(addressToUse, l1GatewayInterface, l1Wallet)
 
     OVM_ETH = new Contract(
       OVM_ETH_ADDRESS,
