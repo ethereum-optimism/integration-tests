@@ -47,4 +47,12 @@ contract OVMMulticall {
     function getCurrentBlockNumber() public view returns (uint256 blockNumber) {
         blockNumber = block.number;
     }
+
+    function getChainID() external view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
+    }
 }
