@@ -4,7 +4,7 @@ import {
   TransactionResponse,
 } from '@ethersproject/providers'
 import { Contract, Wallet } from 'ethers'
-import { Config } from '../../../common'
+import { Config, getl2Provider } from '../../../common'
 
 import {
   getContractInterface,
@@ -22,7 +22,7 @@ export const getEnvironment = async (): Promise<{
   watcher: Watcher
 }> => {
   const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-  const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+  const l2Provider = getl2Provider()
   const l1Wallet = new Wallet(Config.DeployerPrivateKey(), l1Provider)
   const l2Wallet = new Wallet(Config.DeployerPrivateKey(), l2Provider)
 

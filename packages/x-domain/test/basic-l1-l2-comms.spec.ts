@@ -7,13 +7,13 @@ import { Watcher } from '@eth-optimism/watcher'
 import { getContractInterface } from '@eth-optimism/contracts'
 
 /* Imports: Internal */
-import { Config } from '../../../common'
+import { Config, getl2Provider } from '../../../common'
 import l1SimpleStorageJson = require('../../../contracts/build/SimpleStorage.json')
 import l2SimpleStorageJson = require('../../../contracts/build-ovm/SimpleStorage.json')
 
 describe('Basic L1<>L2 Communication', async () => {
   const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-  const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+  const l2Provider = getl2Provider()
 
   let l1Wallet: Wallet
   let l2Wallet: Wallet

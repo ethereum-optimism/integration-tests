@@ -5,7 +5,7 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ContractFactory, Wallet } from 'ethers'
 
 /* Imports: Internal */
-import { Config } from '../../../common'
+import { Config, getl2Provider } from '../../../common'
 import erc20Json = require('../../../contracts/build-ovm/ERC20.json')
 
 describe('Basic ERC20 interactions', async () => {
@@ -15,7 +15,7 @@ describe('Basic ERC20 interactions', async () => {
   const TokenSymbol = 'OVM'
 
   const l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
-  const l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+  const l2Provider = getl2Provider()
 
   let l1Wallet: Wallet
   let l2Wallet: Wallet
