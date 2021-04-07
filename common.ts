@@ -1,35 +1,42 @@
-import * as path from 'path';
+import * as path from 'path'
 import chai = require('chai')
 import dotenv = require('dotenv')
 import chaiAsPromised = require('chai-as-promised')
-import { JsonRpcProvider, Provider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { BigNumber } from 'ethers'
 
 chai.use(chaiAsPromised)
 const should = chai.should()
 
+export const expect = chai.expect
+
 // Load up env variables if running locally
 if (process.env.NODE_ENV === 'local') {
-  const envPath = path.join(__dirname, '/.env');
+  const envPath = path.join(__dirname, '/.env')
   dotenv.config({ path: envPath })
 }
 
 // Commonly used test mnemonic
-export const mnemonic = process.env.MNEMONIC ||
+export const mnemonic =
+  process.env.MNEMONIC ||
   'abandon abandon abandon abandon abandon abandon ' +
-  'abandon abandon abandon abandon abandon about'
+    'abandon abandon abandon abandon abandon about'
 
-let l1Provider: Provider
-export const getL1Provider = (): Provider => {
+let l1Provider: JsonRpcProvider
+export const getL1Provider = (): JsonRpcProvider => {
   if (!l1Provider) {
     l1Provider = new JsonRpcProvider(Config.L1NodeUrlWithPort())
   }
   return l1Provider
 }
 
-let l2Provider: Provider
-export const getl2Provider = (): Provider => {
+let l2Provider: JsonRpcProvider
+export const getl2Provider = (): JsonRpcProvider => {
   if (!l2Provider) {
     l2Provider = new JsonRpcProvider(Config.L2NodeUrlWithPort())
+    l2Provider.getGasPrice = async () => {
+      return BigNumber.from(0)
+    }
   }
   return l2Provider
 }
@@ -43,7 +50,7 @@ export class Config {
   }
 
   public static L2NodeUrlWithPort(): string {
-    if (process.env.L1_NODE_WEB3_URL === undefined) {
+    if (process.env.L2_NODE_WEB3_URL === undefined) {
       throw new Error('L2_NODE_WEB3_URL is undefined')
     }
     return process.env.L2_NODE_WEB3_URL

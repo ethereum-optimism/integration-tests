@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import assert = require('assert')
 import { JsonRpcProvider, TransactionResponse } from '@ethersproject/providers'
-import { BigNumber, Contract, Wallet, utils } from 'ethers'
+import { BigNumber, Contract, Wallet, utils, constants } from 'ethers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { Watcher } from '@eth-optimism/watcher'
 
@@ -61,11 +61,16 @@ describe('Fee Payment Integration Tests', async () => {
     AddressManager = system.AddressManager
     watcher = system.watcher
 
-    OVM_L1ETHGateway = new Contract(
-      await AddressManager.getAddress('OVM_L1ETHGateway'),
-      l1GatewayInterface,
-      l1Wallet
+    const ProxyGatewayAddress = await AddressManager.getAddress(
+      'Proxy__OVM_L1ETHGateway'
     )
+    const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
+    const addressToUse =
+      ProxyGatewayAddress !== constants.AddressZero
+        ? ProxyGatewayAddress
+        : GatewayAddress
+
+    OVM_L1ETHGateway = new Contract(addressToUse, l1GatewayInterface, l1Wallet)
 
     OVM_ETH = new Contract(
       OVM_ETH_ADDRESS,

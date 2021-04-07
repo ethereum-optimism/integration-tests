@@ -34,8 +34,9 @@ NODE_ENV=local yarn test
 
 You can also run specific tests via:
 ```bash
-yarn test:x-domain
-yarn test:tx-ingestion
+$ yarn test:x-domain
+$ yarn test:tx-ingestion
+$ yarn test:sequencer-interactions
 ```
 
 ## Configuration

@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: MIT
+
 /*
 Implements ERC20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 .*/
 
 
-pragma solidity ^0.5.16;
+pragma solidity >=0.7.0 <0.8.0;
 
 import "./IERC20.sol";
 
@@ -21,7 +23,7 @@ contract ERC20 is IERC20 {
     string public name;                   //fancy name: eg OVM Coin
     uint8 public decimals;                //How many decimals to show.
     string public symbol;                 //An identifier: eg OVM
-    uint256 public totalSupply;
+    uint256 public override totalSupply;
 
     constructor(
         uint256 _initialAmount,
@@ -36,7 +38,7 @@ contract ERC20 is IERC20 {
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
-    function transfer(address _to, uint256 _value) external returns (bool success) {
+    function transfer(address _to, uint256 _value) override public returns (bool success) {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
@@ -44,7 +46,7 @@ contract ERC20 is IERC20 {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) override public returns (bool success) {
         uint256 allowance = allowed[_from][msg.sender];
         require(balances[_from] >= _value && allowance >= _value);
         balances[_to] += _value;
@@ -56,17 +58,17 @@ contract ERC20 is IERC20 {
         return true;
     }
 
-    function balanceOf(address _owner) external view returns (uint256 balance) {
+    function balanceOf(address _owner) override public view returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) external returns (bool success) {
+    function approve(address _spender, uint256 _value) override public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) override public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "@eth-optimism/sequencer-interactions",
+  "version": "0.0.1",
+  "description": "[Optimism] Integration Tests: Sequencer Interactions",
+  "author": "Optimism PBC",
+  "license": "MIT",
+  "scripts": {
+    "lint": "yarn lint:fix && yarn lint:check",
+    "lint:check": "tslint --format stylish --project .",
+    "lint:fix": "prettier --config ../../prettier-config.json --write 'test/**/*.ts'",
+    "test": "mocha --require ts-node/register 'test/**/*.spec.ts' --timeout 100000 --exit",
+    "ci": "yarn test"
+  },
+  "devDependencies": {
+    "@ethersproject/providers": "^5.0.24",
+    "chai": "^4.3.3",
+    "ethereum-waffle": "^3.3.0",
+    "ethers": "^5.0.32",
+    "mocha": "^8.3.1"
+  }
+}
