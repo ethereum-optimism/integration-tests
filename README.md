@@ -35,7 +35,7 @@ NODE_ENV=local yarn test
 You can also run specific tests via:
 ```bash
 yarn test:x-domain
-NODE_ENV=local yarn test:tx-ingestion
+yarn test:tx-ingestion
 ```
 
 ## Configuration
