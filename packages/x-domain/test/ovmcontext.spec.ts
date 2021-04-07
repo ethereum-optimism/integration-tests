@@ -104,7 +104,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
    * OVM context.
    */
 
-  it.skip('should return same timestamp and blocknumbers between `eth_call` and `rollup_getInfo`', async () => {
+  it('should return same timestamp and blocknumbers between `eth_call` and `rollup_getInfo`', async () => {
     // As atomically as possible, call `rollup_getInfo` and OVMMulticall for the
     // blocknumber and timestamp. If this is not atomic, then the sequencer can
     // happend to update the timestamp between the `eth_call` and the `rollup_getInfo`
