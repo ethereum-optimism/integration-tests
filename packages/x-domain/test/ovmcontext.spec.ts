@@ -61,7 +61,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
     await OVMMulticall.deployTransaction.wait()
   })
 
-  it('Enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
+  it.skip('Enqueue: `block.number` and `block.timestamp` have L1 values', async () => {
     for (let i = 0; i < 5; i++) {
       const l2Tip = await l2Provider.getBlock('latest')
       const tx = await CanonicalTransactionChain.enqueue(
@@ -104,7 +104,7 @@ describe('OVM Context: Layer 2 EVM Context', () => {
    * OVM context.
    */
 
-  it('should return same timestamp and blocknumbers between `eth_call` and `rollup_getInfo`', async () => {
+  it.skip('should return same timestamp and blocknumbers between `eth_call` and `rollup_getInfo`', async () => {
     // As atomically as possible, call `rollup_getInfo` and OVMMulticall for the
     // blocknumber and timestamp. If this is not atomic, then the sequencer can
     // happend to update the timestamp between the `eth_call` and the `rollup_getInfo`
