@@ -148,5 +148,5 @@ describe('Basic L1<>L2 Communication', async () => {
     expect(await L2SimpleStorage.xDomainSender()).to.equal(l1Wallet.address)
     expect(await L2SimpleStorage.value()).to.equal(value)
     expect((await L2SimpleStorage.totalCount()).toNumber()).to.equal(1)
-  })
+  }).timeout(0)
 })

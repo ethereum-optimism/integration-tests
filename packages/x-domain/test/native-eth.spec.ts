@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import assert = require('assert')
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { BigNumber, Contract, Wallet, constants } from 'ethers'
+import { BigNumber, Contract, Wallet, constants, utils } from 'ethers'
 import { getContractInterface } from '@eth-optimism/contracts'
 import { Watcher } from '@eth-optimism/watcher'
 
@@ -24,7 +24,7 @@ let l2Wallet: Wallet
 let AddressManager: Contract
 let watcher: Watcher
 
-describe('Native ETH Integration Tests', async () => {
+describe.only('Native ETH Integration Tests', async () => {
   let OVM_L1ETHGateway: Contract
   let OVM_ETH: Contract
 
@@ -40,10 +40,10 @@ describe('Native ETH Integration Tests', async () => {
     l2BobBalance: BigNumber
   }> => {
     const l1UserBalance = BigNumber.from(
-      await l1Provider.send('eth_getBalance', [l1Wallet.address])
+      await l1Provider.send('eth_getBalance', [l1Wallet.address, 'latest'])
     )
     const l1BobBalance = BigNumber.from(
-      await l1Provider.send('eth_getBalance', [l1bob.address])
+      await l1Provider.send('eth_getBalance', [l1bob.address, 'latest'])
     )
     const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
     const l2BobBalance = await OVM_ETH.balanceOf(l2bob.address)
@@ -51,7 +51,7 @@ describe('Native ETH Integration Tests', async () => {
       PROXY_SEQUENCER_ENTRYPOINT_ADDRESS
     )
     const l1GatewayBalance = BigNumber.from(
-      await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
+      await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address, 'latest'])
     )
     return {
       l1UserBalance,
@@ -80,6 +80,7 @@ describe('Native ETH Integration Tests', async () => {
     const ProxyGatewayAddress = await AddressManager.getAddress(
       'Proxy__OVM_L1ETHGateway'
     )
+    console.log('connected to proxy at', ProxyGatewayAddress)
     const GatewayAddress = await AddressManager.getAddress('OVM_L1ETHGateway')
     const addressToUse =
       ProxyGatewayAddress !== constants.AddressZero
@@ -95,18 +96,18 @@ describe('Native ETH Integration Tests', async () => {
     )
   })
 
-  it('deposit', async () => {
-    const depositAmount = 10
+  it.only('deposit', async () => {
+    const depositAmount = utils.parseEther('0.69')
 
     const preBalances = await getBalances()
 
-    const gasPrice = 1
+    const gasPrice = 10000000000
     const gasLimit = '0x100000'
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.deposit({
         value: depositAmount,
         gasLimit,
-        gasPrice,
+        gasPrice
       }),
       watcher,
       l1Provider,
@@ -126,14 +127,14 @@ describe('Native ETH Integration Tests', async () => {
     expect(postBalances.l1UserBalance).to.deep.eq(
       preBalances.l1UserBalance.sub(l1FeePaid.add(depositAmount))
     )
-  })
+  }).timeout(0)
 
   it('depositTo', async () => {
     const depositAmount = 10
 
     const preBalances = await getBalances()
 
-    const gasPrice = 1
+    const gasPrice = 10000000000
     const gasLimit = '0x100000'
     const depositReceipts = await waitForDepositTypeTransaction(
       OVM_L1ETHGateway.depositTo(l2bob.address, {

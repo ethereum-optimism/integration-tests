@@ -35,14 +35,14 @@ describe('Fee Payment Integration Tests', async () => {
     sequencerBalance: BigNumber
   }> => {
     const l1UserBalance = BigNumber.from(
-      await l1Provider.send('eth_getBalance', [l1Wallet.address])
+      await l1Provider.send('eth_getBalance', [l1Wallet.address, 'latest'])
     )
     const l2UserBalance = await OVM_ETH.balanceOf(l2Wallet.address)
     const sequencerBalance = await OVM_ETH.balanceOf(
       PROXY_SEQUENCER_ENTRYPOINT_ADDRESS
     )
     const l1GatewayBalance = BigNumber.from(
-      await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address])
+      await l1Provider.send('eth_getBalance', [OVM_L1ETHGateway.address, 'latest'])
     )
     return {
       l1UserBalance,
