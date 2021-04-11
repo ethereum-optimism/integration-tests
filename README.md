@@ -1,3 +1,5 @@
+**[DEPRECATED]** This repository is now deprecated in favour of the new development [monorepo](https://github.com/ethereum-optimism/optimism-monorepo).
+
 # Integration Tests
 
 Typescript based integration test repo for Optimistic Ethereum.
